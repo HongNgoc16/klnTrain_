@@ -1,0 +1,288 @@
+@import '../../styles/variables';
+@import '../../styles/global.scss';
+.pol-page {
+  padding-bottom: 40px;
+
+  // ── Header ────────────────────────────────────────────────────────────────
+
+  .pol-page__header {
+    margin-bottom: 24px;
+  }
+
+  &__title {
+    font-size: 24px;
+    font-weight: 600;
+    color: $dark;
+    margin-bottom: 4px;
+  }
+
+  &__sub {
+    font-size: 14px;
+    color: $gray;
+  }
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+.pol-tabs {
+  display: flex;
+  gap: 8px;
+  background: white;
+  border-radius: 12px;
+  padding: 8px;
+  margin-bottom: 24px;
+  box-shadow: $shadow-sm;
+  
+  // Các tab chia đều chiều rộng
+  button {
+    flex: 1;  // ← THÊM DÒNG NÀY để các tab rộng bằng nhau
+    text-align: center;
+  }
+}
+
+.pol-tab {
+  background: none;
+  border: none;
+  padding: 10px 0;  // Giảm padding ngang, tăng padding dọc
+  font-size: 14px;
+  font-weight: 500;
+  color: $gray;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+
+  &:hover:not(&--active) {
+    background: rgba($primary, 0.05);
+    color: $dark;
+  }
+
+  &--active {
+    background: $primary;
+    color: white;
+    font-weight: 600;
+  }
+}
+// ── Section ───────────────────────────────────────────────────────────────────
+
+.pol-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: $shadow-sm;
+
+  &__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: $gray;
+    margin-bottom: 14px;
+  }
+}
+
+// ── Table ─────────────────────────────────────────────────────────────────────
+
+.pol-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+
+  thead th {
+    text-align: left;
+    font-size: 13px;
+    font-weight: 500;
+    color: $gray;
+    padding: 10px 12px;
+    border-bottom: 1px solid $light;
+    white-space: nowrap;
+  }
+
+  tbody {
+    tr {
+      transition: background 0.15s;
+
+      &:hover td { background: lighten($light, 4%); }
+
+      td {
+        padding: 13px 12px;
+        color: $dark;
+        border-bottom: 1px solid $light;
+        vertical-align: middle;
+      }
+
+      &:last-child td { border-bottom: none; }
+    }
+  }
+}
+
+.td--name   { font-weight: 500; }
+.td--muted  { color: $gray; font-size: 13px; }
+.td--action { text-align: right; }
+
+// ── Numbers ───────────────────────────────────────────────────────────────────
+
+.num {
+  font-size: 14px;
+  font-weight: 600;
+  color: $dark;
+
+  &--danger  { color: $danger; }
+  &--success { color: $success; }
+}
+
+// ── Badge — same convention as StationsManagement ─────────────────────────────
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+
+  &-success { background: rgba($success, 0.1); color: $success; }
+  &-danger  { background: rgba($danger, 0.1);  color: $danger; }
+  &-warning { background: rgba($warning, 0.12); color: darken($warning, 15%); }
+  &-info    { background: rgba($info, 0.1);     color: darken($info, 10%); }
+}
+
+// ── Status indicator ──────────────────────────────────────────────────────────
+
+.status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: $success;
+  margin-right: 7px;
+  vertical-align: middle;
+}
+
+.status-text {
+  font-size: 13px;
+  color: $gray;
+  vertical-align: middle;
+}
+
+// ── Action buttons — mirrors StationsManagement exactly ───────────────────────
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+
+  button {
+
+    &.btn-save {
+      background: rgba($success, 0.1);
+      color: $success;
+      &:hover { background: $success; color: white; }
+    }
+
+    &.btn-cancel-edit {
+      background: rgba($danger, 0.1);
+      color: $danger;
+      &:hover { background: $danger; color: white; }
+    }
+  }
+}
+
+// ── Inline edit ───────────────────────────────────────────────────────────────
+
+.inline-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  input {
+    width: 68px;
+    padding: 6px 10px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid $light;
+    border-radius: 8px;
+    color: $dark;
+    background: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+
+    &:focus {
+      outline: none;
+      border-color: $primary;
+      box-shadow: 0 0 0 2px rgba($primary, 0.1);
+    }
+  }
+
+  &__unit {
+    font-size: 13px;
+    color: $gray;
+    margin-right: 2px;
+  }
+}
+
+// ── Formula box ───────────────────────────────────────────────────────────────
+
+.formula-box {
+  background: lighten($light, 2%);
+  border: 1px solid $light;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+
+  &__label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: $gray;
+    margin-bottom: 6px;
+  }
+
+  &__text {
+    font-size: 14px;
+    color: $dark;
+    line-height: 1.6;
+
+    strong {
+      font-weight: 700;
+      color: $primary;
+    }
+  }
+}
+
+// ── Base price cards ──────────────────────────────────────────────────────────
+
+.base-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 8px;
+}
+
+.base-card {
+  background: lighten($light, 2%);
+  border: 1px solid $light;
+  border-radius: 10px;
+  padding: 16px 18px;
+
+  &__label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: $gray;
+    margin-bottom: 6px;
+  }
+
+  &__value {
+    font-size: 26px;
+    font-weight: 700;
+    color: $primary;
+    margin-bottom: 2px;
+
+    &--md { font-size: 20px; }
+  }
+
+  &__note {
+    font-size: 12px;
+    color: $gray;
+  }
+}

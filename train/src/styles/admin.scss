@@ -1,0 +1,163 @@
+@import './variables';
+@import './mixins';
+
+// Admin common styles
+.admin-container {
+  padding: $spacing-lg;
+  
+  @include mobile {
+    padding: $spacing-md;
+  }
+}
+
+.page-title {
+  font-size: 24px;
+  color: $dark;
+  margin-bottom: $spacing-xs;
+  
+  @include mobile {
+    font-size: 20px;
+  }
+}
+
+.page-subtitle {
+  color: $gray;
+  margin-bottom: $spacing-lg;
+  font-size: 14px;
+}
+
+// Filter bar
+.filter-bar {
+  background: $white;
+  border-radius: $border-radius-lg;
+  padding: $spacing-md;
+  margin-bottom: $spacing-lg;
+  @include flex-between;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+  
+  .filter-group {
+    @include flex(row, flex-start, center, $spacing-md);
+    flex-wrap: wrap;
+    
+    input, select {
+      padding: $spacing-sm $spacing-md;
+      border: 1px solid $light;
+      border-radius: $border-radius-md;
+      font-size: 14px;
+      
+      &:focus {
+        outline: none;
+        border-color: $primary;
+      }
+    }
+  }
+}
+
+// Action buttons
+.action-buttons {
+  @include flex(row, flex-start, center, $spacing-sm);
+  
+  button {
+    @include button($gray, $white);
+    padding: $spacing-sm $spacing-md;
+    font-size: 13px;
+    
+    &.btn-edit {
+      background: $info;
+    }
+    
+    &.btn-delete {
+      background: $danger;
+    }
+    
+    &.btn-view {
+      background: $secondary;
+    }
+  }
+}
+
+// Pagination
+.pagination {
+  @include flex-center;
+  gap: $spacing-sm;
+  margin-top: $spacing-lg;
+  
+  button {
+    @include button($light, $dark);
+    padding: $spacing-sm $spacing-md;
+    min-width: 36px;
+    
+    &.active {
+      background: $primary;
+      color: $white;
+    }
+    
+    &:disabled {
+      opacity: 0.5;
+    }
+  }
+}
+
+// Search input
+.search-input {
+  position: relative;
+  
+  input {
+    padding-left: 36px;
+  }
+  
+  svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: $gray;
+  }
+}
+
+// Badge
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  
+  &.badge-success {
+    background: rgba($success, 0.1);
+    color: $success;
+  }
+  
+  &.badge-warning {
+    background: rgba($warning, 0.1);
+    color: $warning;
+  }
+  
+  &.badge-danger {
+    background: rgba($danger, 0.1);
+    color: $danger;
+  }
+  
+  &.badge-info {
+    background: rgba($info, 0.1);
+    color: $info;
+  }
+}
+
+// Empty state
+.empty-state {
+  text-align: center;
+  padding: $spacing-xl * 2;
+  color: $gray;
+  
+  svg {
+    font-size: 48px;
+    margin-bottom: $spacing-md;
+  }
+  
+  h4 {
+    margin-bottom: $spacing-sm;
+  }
+}

@@ -1,0 +1,230 @@
+@import '../../styles/variables';
+.refunds-page {
+  .page-header {
+    margin-bottom: 24px;
+  }
+  
+  .stats-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+    
+    @media (max-width: 768px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .summary-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: $shadow-sm;
+      
+      .summary-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        
+        &.warning { background: rgba($warning, 0.1); color: $warning; }
+        &.success { background: rgba($success, 0.1); color: $success; }
+        &.primary { background: rgba($primary, 0.1); color: $primary; }
+        &.danger { background: rgba($danger, 0.1); color: $danger; }
+      }
+      
+      .summary-info {
+        .summary-label {
+          font-size: 12px;
+          color: $gray;
+          display: block;
+        }
+        .summary-value {
+          font-size: 20px;
+          font-weight: 700;
+          color: $dark;
+        }
+      }
+    }
+  }
+  
+  .filter-bar {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    
+    .search-input {
+      position: relative;
+      
+      input {
+        padding-left: 36px;
+        width: 300px;
+      }
+      
+      svg {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: $gray;
+      }
+    }
+    
+    select {
+      padding: 8px 16px;
+      border: 1px solid $light;
+      border-radius: 8px;
+    }
+  }
+  
+  .refund-detail {
+    .refund-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid $light;
+      
+      .refund-code {
+        span { font-size: 12px; color: $gray; }
+        h3 { font-size: 20px; color: $primary; margin-top: 4px; }
+      }
+      
+      .refund-status {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+    }
+    
+    .refund-info {
+      margin-bottom: 20px;
+      
+      .info-row {
+        display: flex;
+        padding: 8px 0;
+        
+        .label {
+          width: 100px;
+          color: $gray;
+        }
+        .value { flex: 1; color: $dark; }
+      }
+    }
+    
+    .refund-amounts {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      
+      .amount-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        
+        &.minus { color: $danger; }
+        &.total {
+          padding-top: 12px;
+          margin-top: 8px;
+          border-top: 1px solid $light;
+          font-weight: 600;
+          
+          .refund-total { color: $success; font-size: 18px; }
+        }
+      }
+    }
+    
+    .refund-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding-top: 16px;
+      border-top: 1px solid $light;
+      
+      // Style riêng cho button trong refund-actions
+      button {
+        width: auto;           // Tự động theo nội dung
+        height: auto;          // Tự động theo nội dung
+        padding: 10px 20px;    // Padding cho đẹp
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        gap: 8px;
+        
+        &.btn-secondary {
+          background: $gray;
+          color: white;
+          
+          &:hover {
+            background: darken($gray, 10%);
+          }
+        }
+        
+        &.btn-primary {
+          background: $primary;
+          color: white;
+          
+          &:hover {
+            background: $primary-dark;
+          }
+        }
+      }
+    }
+  }
+  
+  .refund-amount {
+    color: $success;
+    font-weight: 600;
+  }
+  
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    
+    &.status-completed { background: rgba($success, 0.1); color: $success; }
+    &.status-pending { background: rgba($warning, 0.1); color: $warning; }
+    &.status-cancelled { background: rgba($danger, 0.1); color: $danger; }
+  }
+}
+
+  // Action buttons
+  .action-buttons {
+    display: flex;
+    gap: 8px;
+    
+    button {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+      
+      &.btn-view {
+        background: rgba($info, 0.1);
+        color: $info;
+        &:hover { background: $info; color: white; }
+      }
+    }
+  }
