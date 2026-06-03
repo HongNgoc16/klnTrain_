@@ -1,0 +1,256 @@
+@import '../../styles/variables';
+
+.seat-types-management {
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+    
+    .page-title { font-size: 24px; color: $dark; margin-bottom: 4px; }
+    .page-subtitle { color: $gray; font-size: 14px; }
+  }
+
+  .filter-bar {
+    background: white; 
+    border-radius: 12px; 
+    padding: 16px; 
+    margin-bottom: 20px;
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    flex-wrap: wrap; 
+    gap: 16px;
+    box-shadow: $shadow-sm;
+    
+    .search-input { 
+        position: relative; 
+        flex: 1; 
+        max-width: 350px;
+      svg { 
+        position: absolute; 
+        left: 12px; 
+        top: 50%; 
+        transform: translateY(-50%); 
+        color: $gray; 
+    }
+      input { 
+        width: 100%; 
+        padding: 10px 12px 10px 36px; 
+        border: 1px solid $light; 
+        border-radius: 8px; 
+    }
+    }
+    .stats-info { 
+        font-size: 14px; 
+        color: $gray; 
+    }
+  }
+
+  .carriage-config-section {
+    background: white; 
+    border-radius: 12px; 
+    padding: 20px; 
+    margin-top: 24px; 
+    box-shadow: $shadow-sm;
+    h3 { 
+        font-size: 16px; 
+        color: $dark; 
+        margin-bottom: 16px; 
+        padding-bottom: 8px; 
+        border-bottom: 2px solid $primary; 
+        display: inline-block; 
+    }
+    
+    .carriage-config-grid {
+      display: grid; 
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+      gap: 16px; 
+      margin-top: 16px;
+      
+      .carriage-config-card {
+        background: #f8f9fa; 
+        border-radius: 12px; 
+        padding: 16px; 
+        display: flex; 
+        align-items: center; 
+        gap: 16px;
+        transition: all 0.3s; 
+        cursor: pointer;
+        &:hover { 
+            transform: translateY(-2px); 
+            box-shadow: $shadow-md; 
+            background: white; 
+        }
+        
+        .carriage-icon { 
+            width: 48px; 
+            height: 48px; 
+            background: rgba($primary, 0.1); 
+            border-radius: 12px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 24px; 
+            color: $primary; 
+        }
+        .carriage-info { 
+            flex: 1;
+          .carriage-name { 
+            font-weight: 600; 
+            color: $dark; 
+            margin-bottom: 4px; 
+        }
+          .carriage-code { 
+            font-size: 12px; 
+            color: $gray; 
+            margin-bottom: 4px; 
+        }
+          .carriage-seats { 
+            font-size: 11px; 
+            color: $success; 
+        }
+        }
+        .btn-config { 
+            background: $primary; 
+            color: white; 
+            border: none; 
+            padding: 6px 12px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 12px; 
+        }
+      }
+    }
+  }
+
+  .seat-config {
+    .config-stats { 
+        display: flex; 
+        justify-content: space-between; 
+        padding: 12px; 
+        background: #f8f9fa; 
+        border-radius: 8px; 
+        margin-bottom: 16px; 
+        color: $gray; 
+        font-size: 13px; 
+    }
+    .config-table {
+         width: 100%; 
+         border-collapse: collapse;
+      th, td { 
+        padding: 10px; 
+        text-align: left; 
+        border-bottom: 1px solid $light; 
+        font-size: 13px; 
+    }
+      th { 
+        background: #f8f9fa; 
+        font-weight: 600; 
+        color: $gray; 
+    }
+      .td--name { 
+        font-weight: 500; 
+        color: $dark; 
+    }
+    }
+  }
+
+  .action-buttons {
+    display: flex; 
+    gap: 6px;
+    button { 
+        width: 32px; 
+        height: 32px; 
+        border-radius: 6px; 
+        border: none; 
+        cursor: pointer;
+      display: inline-flex; 
+      align-items: center; 
+      justify-content: center; 
+      transition: all 0.3s;
+      &.btn-edit { 
+        background: rgba($warning, 0.1); 
+        color: $warning; 
+        &:hover { 
+            background: $warning; 
+            color: white; 
+        } }
+      &.btn-delete { 
+        background: rgba($danger, 0.1); 
+        color: $danger; 
+        &:hover { 
+            background: $danger;
+             color: white; 
+            } }
+    }
+  }
+
+  .badge {
+    display: inline-flex; 
+    padding: 4px 10px; 
+    border-radius: 20px; 
+    font-size: 12px; 
+    font-weight: 500;
+    &.badge-success { 
+        background: rgba($success, 0.1); 
+        color: $success; 
+    }
+    &.badge-danger { 
+        background: rgba($danger, 0.1); 
+        color: $danger; 
+    }
+  }
+
+  .form-row { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 16px; 
+    margin-bottom: 16px; 
+}
+  .form-group { 
+    margin-bottom: 16px;
+    label { 
+        display: block; 
+        margin-bottom: 6px; 
+        font-weight: 500; 
+        color: $dark; 
+    }
+    input, select { 
+        width: 100%; 
+        padding: 10px 12px; 
+        border: 1px solid $light; 
+        border-radius: 8px; 
+    }
+  }
+  .form-actions { 
+    display: flex; 
+    justify-content: flex-end; 
+    gap: 12px; 
+    margin-top: 20px; 
+    padding-top: 16px; 
+    border-top: 1px solid $light; 
+}
+
+  .btn-primary { 
+    background: $primary; 
+    color: white; 
+    border: none; 
+    padding: 10px 20px; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    display: inline-flex; 
+    align-items: center; 
+    gap: 8px;
+ }
+  .btn-secondary { 
+    background: $gray; 
+    color: white; 
+    border: none; 
+    padding: 10px 20px; 
+    border-radius: 8px; 
+    cursor: pointer;
+ }
+}

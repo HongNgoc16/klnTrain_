@@ -1,0 +1,59 @@
+// train/src/components/Common/ConfirmDialog.scss
+.confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.confirm-dialog {
+  background: white;
+  border-radius: 12px;
+  width: 400px;
+  max-width: 90%;
+  animation: slideIn 0.3s ease;
+  
+  .confirm-header {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    
+    h3 {
+      margin: 0;
+      color: #333;
+    }
+  }
+  
+  .confirm-body {
+    padding: 20px;
+    
+    p {
+      margin: 0;
+      line-height: 1.5;
+    }
+  }
+  
+  .confirm-footer {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    border-top: 1px solid #eee;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

@@ -1,0 +1,472 @@
+@import '../../styles/variables';
+@import '../../styles/global.scss';
+.tickets-management {
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+    
+    .page-title {
+      font-size: 24px;
+      color: $dark;
+      margin-bottom: 4px;
+    }
+    
+    .page-subtitle {
+      color: $gray;
+      font-size: 14px;
+    }
+  }
+  
+  // Stats summary
+  .stats-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+    
+    @media (max-width: 768px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .stat-box {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      box-shadow: $shadow-sm;
+      transition: all 0.3s;
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: $shadow-md;
+      }
+      
+      .stat-label {
+        display: block;
+        font-size: 12px;
+        color: $gray;
+        margin-bottom: 8px;
+      }
+      
+      .stat-value {
+        display: block;
+        font-size: 24px;
+        font-weight: 700;
+        color: $dark;
+      }
+      
+      &.success .stat-value { color: $success; }
+      &.info .stat-value { color: $info; }
+      &.danger .stat-value { color: $danger; }
+      &.primary .stat-value { color: $primary; }
+    }
+  }
+  
+  // Filter bar
+  .filter-bar {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    box-shadow: $shadow-sm;
+    
+    .search-input {
+      position: relative;
+      flex: 1;
+      max-width: 350px;
+      
+      svg {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: $gray;
+      }
+      
+      input {
+        width: 100%;
+        padding: 10px 12px 10px 36px;
+        border: 1px solid $light;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s;
+        
+        &:focus {
+          outline: none;
+          border-color: $primary;
+          box-shadow: 0 0 0 2px rgba($primary, 0.1);
+        }
+      }
+    }
+    
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      svg {
+        color: $gray;
+      }
+      
+      select {
+        padding: 10px 12px;
+        border: 1px solid $light;
+        border-radius: 8px;
+        font-size: 14px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s;
+        
+        &:focus {
+          outline: none;
+          border-color: $primary;
+          box-shadow: 0 0 0 2px rgba($primary, 0.1);
+        }
+      }
+    }
+  }
+  
+  // Button styles
+  .btn-primary {
+    background: $primary;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s;
+    
+    &:hover {
+      background: $primary-dark;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba($primary, 0.3);
+    }
+  }
+  
+  // Ticket detail modal
+  .ticket-detail {
+    .ticket-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid $light;
+      
+      .ticket-code {
+        span {
+          font-size: 12px;
+          color: $gray;
+        }
+        
+        h2 {
+          font-size: 24px;
+          color: $primary;
+          margin-top: 4px;
+        }
+      }
+      
+      .ticket-status {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        
+        &.badge-success {
+          background: rgba($success, 0.1);
+          color: $success;
+        }
+        
+        &.badge-info {
+          background: rgba($info, 0.1);
+          color: $info;
+        }
+        
+        &.badge-danger {
+          background: rgba($danger, 0.1);
+          color: $danger;
+        }
+        
+        &.badge-warning {
+          background: rgba($warning, 0.1);
+          color: $warning;
+        }
+        
+      }
+    }
+    
+    .ticket-info {
+      .info-row {
+        display: flex;
+        padding: 10px 0;
+        border-bottom: 1px solid $light;
+        
+        &:last-child {
+          border-bottom: none;
+        }
+        
+        .label {
+          width: 120px;
+          font-weight: 500;
+          color: $gray;
+        }
+        
+        .value {
+          flex: 1;
+          color: $dark;
+          
+          &.price {
+            color: $primary;
+            font-weight: 600;
+            font-size: 18px;
+          }
+        }
+      }
+    }
+    
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid $light;
+      
+      button {
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.3s;
+        
+        &:hover {
+          transform: translateY(-1px);
+        }
+      }
+      
+      .btn-confirm {
+        background: $success;
+        color: white;
+        
+        &:hover { background: darken($success, 10%); }
+      }
+      
+      .btn-cancel {
+        background: $danger;
+        color: white;
+        
+        &:hover { background: darken($danger, 10%); }
+      }
+      
+      .btn-print {
+        background: $gray;
+        color: white;
+        
+        &:hover { background: darken($gray, 10%); }
+      }
+    }
+    
+    .qr-code {
+      text-align: center;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid $light;
+      
+      .qr-placeholder {
+        display: inline-block;
+        background: white;
+        padding: 12px;
+        border: 1px solid $light;
+        border-radius: 12px;
+      }
+      
+      p {
+        margin-top: 8px;
+        font-size: 12px;
+        color: $gray;
+      }
+    }
+  }
+  
+  // Action buttons
+  .action-buttons {
+    display: flex;
+    gap: 8px;
+    
+    button {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+      
+      &:hover {
+        transform: translateY(-1px);
+      }
+      
+      &.btn-view {
+        background: rgba($info, 0.1);
+        color: $info;
+        
+        &:hover {
+          background: $info;
+          color: white;
+        }
+      }
+      
+      &.btn-confirm {
+        background: rgba($success, 0.1);
+        color: $success;
+        
+        &:hover { 
+          background: $success; 
+          color: white; 
+        }
+      }
+      
+      &.btn-cancel {
+        background: rgba($danger, 0.1);
+        color: $danger;
+        
+        &:hover { 
+          background: $danger; 
+          color: white; 
+        }
+      }
+      
+      &.btn-print {
+        background: rgba($gray, 0.1);
+        color: $gray;
+        
+        &:hover { 
+          background: $gray; 
+          color: white; 
+        }
+      }
+    }
+  }
+  
+  // Status badge
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    
+    &.status-completed {
+      background: rgba($success, 0.1);
+      color: $success;
+    }
+    
+    &.status-pending {
+      background: rgba($warning, 0.1);
+      color: $warning;
+    }
+    
+    &.status-cancelled {
+      background: rgba($danger, 0.1);
+      color: $danger;
+    }
+    
+    &.status-ontime {
+      background: rgba($success, 0.1);
+      color: $success;
+    }
+    
+    &.status-delayed {
+      background: rgba($warning, 0.1);
+      color: $warning;
+    }
+  }
+  
+  // Data table override
+  .data-table-container {
+    .status-badge {
+      white-space: nowrap;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .tickets-management {
+    .page-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .filter-bar {
+      flex-direction: column;
+      
+      .search-input {
+        max-width: 100%;
+        width: 100%;
+      }
+      
+      .filter-group {
+        width: 100%;
+        
+        select {
+          flex: 1;
+        }
+      }
+    }
+    
+    .stats-summary {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .action-buttons {
+      flex-wrap: wrap;
+    }
+    
+    .ticket-detail {
+      .ticket-info .info-row {
+        flex-direction: column;
+        
+        .label {
+          width: 100%;
+          margin-bottom: 4px;
+        }
+      }
+      
+      .modal-actions {
+        flex-wrap: wrap;
+        
+        button {
+          flex: 1;
+          justify-content: center;
+        }
+      }
+    }
+  }
+}
