@@ -12,7 +12,7 @@ exports.getAllRefunds = async (req, res) => {
         h.tien_hoan,
         h.ly_do,
         h.trang_thai_hoan,
-        h.thoi_gian_hoan,
+        h.thoi_gian_hoan   AS ngay_huy, 
         tk.ho_ten,
         t.so_hieu,
         v.ngay_xuat_ve
