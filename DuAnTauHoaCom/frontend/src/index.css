@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── CSS Variables ─────────────────────────────────── */
+:root {
+  --nav-h: 96px;       /* 56px main bar + 40px topbar */
+  --brand:       #8C1D19;
+  --brand-dark:  #6a1513;
+  --brand-light: #b22520;
+  --accent:      #FFD15A;
+  --cream:       #FDF2D6;
+}
+
+/* ─── Base ──────────────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Custom Scrollbar (WebKit) ─────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f5f0e8;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb {
+  background: #8C1D19;
+  border-radius: 9999px;
+  border: 1px solid #f5f0e8;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #6a1513;
+}
+::-webkit-scrollbar-corner {
+  background: #f5f0e8;
+}
+
+/* ─── Custom Scrollbar (Firefox) ────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #8C1D19 #f5f0e8;
+}
+
+/* ─── Focus ring branding ────────────────────────────── */
+*:focus-visible {
+  outline: 2px solid #8C1D19;
+  outline-offset: 2px;
+}
+
+/* ─── Smooth page transitions ────────────────────────── */
+@layer utilities {
+  .page-enter {
+    animation: fadeIn 0.3s ease-out both, slideUp 0.35s ease-out both;
+  }
+}
+
+/* ─── Print ──────────────────────────────────────────── */
+@media print {
+  .no-print   { display: none !important; }
+  .print-only { display: block !important; }
+  nav, header { display: none !important; }
+  body        { background: white !important; }
+}

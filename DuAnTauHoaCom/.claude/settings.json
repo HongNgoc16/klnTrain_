@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -o /dev/null -w \"health -> %{http_code}\\\\n\" http://localhost:5000/api/health)",
+      "Bash(curl -s -o /dev/null -w \"notifications -> %{http_code}\\\\n\" http://localhost:5000/api/notifications)",
+      "Bash(curl -s http://localhost:5000/api/notifications)",
+      "Bash(curl -s http://localhost:8000/api/notifications)",
+      "Bash(curl -s http://localhost:8000/api/notifications/read-all -X PUT)"
+    ]
+  }
+}
