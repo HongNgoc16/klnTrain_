@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"d:\\\\Nam3\\\\Ki2_Nam3\\\\CNLTTH\\\\DuAnTauHoa\" -Recurse -Force)",
+      "Bash(Select-Object -First 100)",
+      "Bash(Format-List FullName)",
+      "Read(//d/Nam3/Nam3/Ki2_Nam3/CNLTTH/DuAnTauHoa/backend/src/models/**)",
+      "Bash(python -c \"import docx; print\\('ok'\\)\")",
+      "Bash(pip install *)",
+      "Bash(python gen_doc.py)",
+      "Bash(python -m pip install python-docx)",
+      "Bash(python -c \"from docx import Document; print\\('ok'\\)\")",
+      "Bash(where python *)",
+      "Bash(C:\\\\Users\\\\MSI\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python311\\\\python.exe -m pip install python-docx)",
+      "Bash(C:\\\\Users\\\\MSI\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python311\\\\python.exe -c \"from docx import Document; print\\('ok'\\)\")",
+      "Bash(dir \"d:\\\\Nam3\\\\Ki2_Nam3\\\\CNLTTH\\\\DuAnTauHoa\\\\backend\\\\src\")",
+      "Bash(npm install *)"
+    ]
+  }
+}
