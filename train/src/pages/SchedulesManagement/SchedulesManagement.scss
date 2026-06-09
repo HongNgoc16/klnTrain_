@@ -9,290 +9,74 @@
     flex-wrap: wrap;
     gap: 16px;
     
-    .page-title {
-      font-size: 24px;
-      color: $dark;
-      margin-bottom: 4px;
-    }
-    
+    .page-title { font-size: 24px; color: $dark; margin-bottom: 4px; }
+    .page-subtitle { color: $gray; font-size: 14px; }
   }
-  
-  // Button styles
-  .btn-primary {
-      height: 32px;
-    background: $primary;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.3s;
-    
-    &:hover {
-      background: $primary-dark;
-      transform: translateY(-1px);
-    }
-  }
-  
-  .btn-secondary {
-    background: $gray;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.3s;
-    
-    &:hover {
-      background: darken($gray, 10%);
-    }
-  }
-  
-  // Form styles
-  .form-group {
-    margin-bottom: 16px;
-    
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 500;
-      color: $dark;
-      font-size: 14px;
-    }
-    
-    input, select {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid $light;
-      border-radius: 8px;
-      font-size: 14px;
-      transition: all 0.3s;
-      
-      &:focus {
-        outline: none;
-        border-color: $primary;
-        box-shadow: 0 0 0 2px rgba($primary, 0.1);
-      }
-    }
-  }
-  
-  .form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 16px;
-    
-    @media (max-width: 768px) {
-      grid-template-columns: 1fr;
-    }
-  }
-  
-  .form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    margin-top: 20px;
-    padding-top: 16px;
-    border-top: 1px solid $light;
-  }
-  
-  // Action buttons
-  .action-buttons {
-    display: flex;
-    gap: 8px;
-    
-    button {
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s;
-      
-      &:hover {
-        transform: translateY(-1px);
-      }
-      
-      &.btn-view {
-        background: rgba($info, 0.1);
-        color: $info;
-        
-        &:hover {
-          background: $info;
-          color: white;
-        }
-      }
-      
-      &.btn-station {
-        background: rgba($warning, 0.1);
-        color: $warning;
-        
-        &:hover {
-          background: $warning;
-          color: white;
-        }
-      }
-      
-      &.btn-delete {
-        background: rgba($danger, 0.1);
-        color: $danger;
-        
-        &:hover {
-          background: $danger;
-          color: white;
-        }
-      }
-    }
-  }
-  
-  // Station list table
-  .station-list {
-    h4 {
-      font-size: 16px;
-      color: $dark;
-      margin-bottom: 16px;
-      padding-bottom: 8px;
-      border-bottom: 2px solid $primary;
-      display: inline-block;
-    }
-    
-    .station-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 16px;
-      
-      th, td {
-        padding: 12px;
-        text-align: left;
-        border-bottom: 1px solid $light;
-      }
-      
-      th {
-        background: #f8f9fa;
-        font-weight: 600;
-        color: $dark;
-        font-size: 13px;
-      }
-      
-      td {
-        font-size: 13px;
-        color: $dark;
-        
-        small {
-          font-size: 11px;
-          color: $gray;
-        }
-      }
-      
-      tr:hover {
-        background: #f8f9fa;
-      }
-    }
-  }
-  
-  // Filter bar
+
   .filter-bar {
-    background: white;
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
+    background: white; border-radius: 12px; padding: 16px; margin-bottom: 20px;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;
     box-shadow: $shadow-sm;
     
     .search-input {
-      position: relative;
-      flex: 1;
-      max-width: 350px;
-      
-      svg {
-        position: absolute;
-        left: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: $gray;
-      }
-      
-      input {
-        width: 100%;
-        padding: 10px 12px 10px 36px;
-        border: 1px solid $light;
-        border-radius: 8px;
-        font-size: 14px;
-        
-        &:focus {
-          outline: none;
-          border-color: $primary;
-          box-shadow: 0 0 0 2px rgba($primary, 0.1);
-        }
-      }
+      position: relative; flex: 1; max-width: 350px;
+      svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: $gray; }
+      input { width: 100%; padding: 10px 12px 10px 36px; border: 1px solid $light; border-radius: 8px; }
     }
-    
-    .stats-info {
-      font-size: 14px;
-      color: $gray;
-    }
+    .stats-info { font-size: 14px; color: $gray; }
   }
-  
-  // Badge
-  .badge {
-    display: inline-flex;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 500;
-    
-    &.badge-success {
-      background: rgba($success, 0.1);
-      color: $success;
-    }
-    
-    &.badge-warning {
-      background: rgba($warning, 0.1);
-      color: $warning;
-    }
-    
-    &.badge-danger {
-      background: rgba($danger, 0.1);
-      color: $danger;
-    }
-    
-    &.badge-info {
-      background: rgba($info, 0.1);
-      color: $info;
-    }
-  }
-}
 
-// Responsive
-@media (max-width: 768px) {
-  .schedules-management {
-    .page-header {
-      flex-direction: column;
-      align-items: flex-start;
+  .action-buttons {
+    display: flex; gap: 6px;
+    button {
+      width: 32px; height: 32px; border-radius: 6px; border: none; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; transition: all 0.3s;
+      &.btn-station { background: rgba($warning, 0.1); color: $warning; &:hover { background: $warning; color: white; } }
+      &.btn-edit { background: rgba($info, 0.1); color: $info; &:hover { background: $info; color: white; } }
+      &.btn-delete { background: rgba($danger, 0.1); color: $danger; &:hover { background: $danger; color: white; } }
     }
-    
-    .action-buttons {
-      flex-wrap: wrap;
+  }
+
+  .station-list {
+    .route-summary {
+      display: flex; gap: 155px; background: #f8f9fa; padding: 12px 16px; border-radius: 10px; margin-bottom: 20px;
+      .summary-item {
+        .summary-label { font-size: 12px; color: $gray; display: block; margin-bottom: 4px; }
+        .summary-value { font-size: 16px; font-weight: 600; color: $primary; }
+      }
     }
     
     .station-table {
-      font-size: 12px;
-      
-      th, td {
-        padding: 8px;
+      width: 100%; border-collapse: collapse; margin-bottom: 24px;
+      th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid $light; }
+      th { background: #f8f9fa; font-weight: 600; color: $gray; font-size: 13px; }
+      td { font-size: 13px; text-align: left}
+      .stt-cell { width: 50px; text-align: center; font-weight: 600; color: $primary; }
+      .station-name-cell { font-weight: 500; .station-code { font-size: 11px; color: $gray; font-family: monospace; } }
+      .time-cell { font-family: monospace; font-weight: 500; }
+      .km-cell { text-align: left; }
+      .minute-cell { text-align: left; }
+      .action-cell { align-items: left; width: 50px; }
+      .btn-delete-sm { background: rgba($danger, 0.1); color: $danger; border: none; width: 28px; height: 28px; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; &:hover { background: $danger; color: white; } }
+    }
+    
+    .route-timeline {
+      background: #f8f9fa; border-radius: 12px; padding: 20px; margin-top: 20px;
+      .timeline-title { font-size: 14px; font-weight: 600; color: $dark; margin-bottom: 20px; }
+      .timeline {
+        display: flex; flex-wrap: wrap; justify-content: space-between; position: relative;
+        .timeline-node {
+          flex: 1; text-align: center; position: relative; min-width: 80px;
+          .timeline-dot { width: 12px; height: 12px; background: $primary; border-radius: 50%; margin: 0 auto 8px; }
+          .timeline-content {
+            .timeline-station { font-size: 13px; font-weight: 600; color: $dark; margin-bottom: 4px; }
+            .timeline-time { font-size: 11px; color: $gray; font-family: monospace; margin-bottom: 2px; }
+            .timeline-km { font-size: 10px; color: $success; }
+          }
+          .timeline-line { position: absolute; top: 6px; right: 50%; width: 100%; height: 2px; background: $light; z-index: 0; }
+          &:first-child .timeline-line { display: none; }
+          &:last-child .timeline-line { display: none; }
+        }
       }
     }
   }

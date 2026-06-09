@@ -35,30 +35,7 @@ const Coupons = () => {
       ngay_het_han: '2026-9-31',
       trang_thai: 'active'
     },
-    {
-      id: 3,
-      ma_km: 'DBP2026',
-      mo_ta: 'Giảm 20% kỉ niệm Giải phóng Điện Biên',
-      loai_giam: 'percent',
-      gia_tri: 20,
-      so_luong: 200,
-      da_dung: 0,
-      ngay_bat_dau: '2026-5-5',
-      ngay_het_han: '2026-5-20',
-      trang_thai: 'expired'
-    },
-    {
-      id: 4,
-      ma_km: 'STUDENT30',
-      mo_ta: 'Giảm 20% lễ 30/5 - 1/5',
-      loai_giam: 'percent',
-      gia_tri: 30,
-      so_luong: 500,
-      da_dung: 120,
-      ngay_bat_dau: '2026-4-20',
-      ngay_het_han: '2026-5-05',
-      trang_thai: 'active'
-    }
+  
   ]);
 
   const [formData, setFormData] = useState({

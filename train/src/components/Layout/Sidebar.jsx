@@ -59,14 +59,7 @@ const Sidebar = ({ collapsed, toggleCollapse, mobileOpen }) => {
               <MdOutlineReportProblem className='icon' />
               <span className="smallText">Hủy & Hoàn tiền</span>
             </NavLink>
-          </li>
-          <li className="listItem">
-            <NavLink to="/payments" className={({ isActive }) => `menuLink flex ${isActive ? 'active' : ''}`}>
-              <MdOutlinePayment className='icon' />
-              <span className="smallText">Quản lý thanh toán</span>
-            </NavLink>
-          </li>
-          
+          </li>          
         </ul>
       </div>
 

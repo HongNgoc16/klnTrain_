@@ -1,0 +1,290 @@
+@import '../../styles/variables';
+
+.carriage-types-page {
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+    
+    .page-title { font-size: 24px; color: $dark; margin-bottom: 4px; }
+    .page-subtitle { color: $gray; font-size: 14px; }
+    
+    .header-actions {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      
+      .view-toggle {
+        display: flex;
+        background: #f0f0f0;
+        border-radius: 8px;
+        padding: 3px;
+        
+        .toggle-btn {
+          padding: 6px 12px;
+          border: none;
+          background: transparent;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 13px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          transition: all 0.3s;
+          
+          &.active {
+            background: $primary;
+            color: white;
+          }
+          
+          &:hover:not(.active) {
+            background: rgba($primary, 0.1);
+          }
+        }
+      }
+    }
+  }
+
+  .filter-bar {
+    background: white; border-radius: 12px; padding: 16px; margin-bottom: 20px;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;
+    box-shadow: $shadow-sm;
+    
+    .search-input {
+      position: relative; flex: 1; max-width: 350px;
+      svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: $gray; }
+      input { width: 100%; padding: 10px 12px 10px 36px; border: 1px solid $light; border-radius: 8px; }
+    }
+    .stats-info { font-size: 14px; color: $gray; }
+  }
+
+  // Card View Panel - Panel trắng giống cấu hình ghế
+  .carriage-cards-panel {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: $shadow-sm;
+    
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid $light;
+      
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: $dark;
+      }
+      
+      .panel-total {
+        font-size: 13px;
+        color: $gray;
+        background: #f8f9fa;
+        padding: 4px 12px;
+        border-radius: 20px;
+      }
+    }
+    
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+      
+      .carriage-card {
+        background: #f8f9fa;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s;
+        
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: $shadow-md;
+        }
+        
+        .card-header {
+          background: white;
+          padding: 16px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          border-bottom: 1px solid $light;
+          
+          .card-icon {
+            width: 44px;
+            height: 44px;
+            background: rgba($primary, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: $primary;
+          }
+          
+          .card-code {
+            flex: 1;
+            font-family: monospace;
+            font-size: 14px;
+            font-weight: 600;
+            color: $primary;
+          }
+          
+          .card-actions {
+            display: flex;
+            gap: 8px;
+            
+            .icon-btn {
+              width: 30px;
+              height: 30px;
+              border-radius: 6px;
+              border: none;
+              cursor: pointer;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              transition: all 0.3s;
+              
+              &.edit {
+                background: rgba($warning, 0.1);
+                color: $warning;
+                &:hover { background: $warning; color: white; }
+              }
+              
+              &.delete {
+                background: rgba($danger, 0.1);
+                color: $danger;
+                &:hover { background: $danger; color: white; }
+              }
+            }
+          }
+        }
+        
+        .card-body {
+          padding: 16px;
+          
+          .card-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: $dark;
+            margin-bottom: 12px;
+            line-height: 1.4;
+          }
+          
+          .card-stats {
+            display: flex;
+            gap: 16px;
+            
+            .stat {
+              flex: 1;
+              
+              .stat-label {
+                display: block;
+                font-size: 11px;
+                color: $gray;
+                margin-bottom: 4px;
+              }
+              
+              .stat-value {
+                font-size: 14px;
+                font-weight: 500;
+                color: $dark;
+              }
+            }
+          }
+        }
+        
+        .card-footer {
+          padding: 12px 16px;
+          background: white;
+          border-top: 1px solid $light;
+          
+          .btn-detail {
+            width: 100%;
+            padding: 8px;
+            background: none;
+            border: 1px solid $light;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 13px;
+            color: $gray;
+            transition: all 0.3s;
+            
+            &:hover {
+              background: rgba($primary, 0.05);
+              border-color: $primary;
+              color: $primary;
+            }
+          }
+        }
+      }
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: $gray;
+    }
+  }
+
+  // Badge types
+  .badge-type {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    
+    &.badge-bed {
+      background: rgba($primary, 0.1);
+      color: $primary;
+    }
+    
+    &.badge-soft {
+      background: rgba($success, 0.1);
+      color: $success;
+    }
+    
+    &.badge-hard {
+      background: rgba($warning, 0.1);
+      color: $warning;
+    }
+  }
+
+  .action-buttons {
+    display: flex; gap: 6px;
+    button {
+      width: 32px; height: 32px; border-radius: 6px; border: none; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; transition: all 0.3s;
+      &.btn-edit { background: rgba($warning, 0.1); color: $warning; &:hover { background: $warning; color: white; } }
+      &.btn-delete { background: rgba($danger, 0.1); color: $danger; &:hover { background: $danger; color: white; } }
+    }
+  }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .form-group {
+    margin-bottom: 16px;
+    label { display: block; margin-bottom: 6px; font-weight: 500; color: $dark; }
+    input, select { width: 100%; padding: 10px 12px; border: 1px solid $light; border-radius: 8px; }
+    .hint { display: block; font-size: 11px; color: $gray; margin-top: 4px; }
+  }
+  .form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; padding-top: 16px; border-top: 1px solid $light; }
+
+  .btn-primary { background: $primary; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+  .btn-secondary { background: $gray; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+
+  @media (max-width: 768px) {
+    .cards-grid { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    .header-actions { flex-direction: column; align-items: stretch; }
+  }
+}

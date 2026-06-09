@@ -52,8 +52,6 @@ const Refunds = () => {
       // Mock data khi lỗi
       setRefunds([
         { id: 1, ma_ve: 'V001', khach_hang: 'Nguyễn Văn A', chuyen_tau: 'SE1', ngay_huy: '2024-01-12', tien_goc: 1250000, phi_huy: 125000, tien_hoan: 1125000, ly_do: 'Thay đổi kế hoạch', trang_thai: 'completed' },
-        { id: 2, ma_ve: 'V002', khach_hang: 'Trần Thị B', chuyen_tau: 'SE2', ngay_huy: '2024-01-08', tien_goc: 890000, phi_huy: 44500, tien_hoan: 845500, ly_do: 'Tàu bị hoãn', trang_thai: 'completed' },
-        { id: 3, ma_ve: 'V003', khach_hang: 'Lê Văn C', chuyen_tau: 'TN1', ngay_huy: '2024-01-16', tien_goc: 450000, phi_huy: 22500, tien_hoan: 427500, ly_do: 'Đặt nhầm ngày', trang_thai: 'pending' }
       ]);
     } finally {
       setLoading(false);

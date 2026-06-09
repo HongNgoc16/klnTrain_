@@ -165,6 +165,7 @@ const StationsManagement = () => {
           <FiSearch />
           <input type="text" placeholder="Tìm kiếm ga..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
+        <div className="stats-info">Tổng số: {stations.length} ga</div>
       </div>
 
       <DataTable columns={columns} data={filteredStations} />

@@ -188,3 +188,44 @@ exports.getDashboardStats = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// Lấy thống kê tóm tắt
+exports.getSummaryStats = async (req, res) => {
+  const { range } = req.query;
+  let dateCondition = '';
+  
+  if (range === 'week') dateCondition = 'DATEADD(day, -7, GETDATE())';
+  else if (range === 'month') dateCondition = 'DATEADD(month, -1, GETDATE())';
+  else if (range === 'quarter') dateCondition = 'DATEADD(month, -3, GETDATE())';
+  else if (range === 'year') dateCondition = 'DATEADD(year, -1, GETDATE())';
+  else dateCondition = 'DATEADD(month, -1, GETDATE())';
+  
+  try {
+    const result = await executeQuery(`
+      SELECT 
+        ISNULL(SUM(CASE WHEN ngay_xuat_ve >= @dateCondition THEN gia_ve ELSE 0 END), 0) AS total_revenue,
+        COUNT(CASE WHEN ngay_xuat_ve >= @dateCondition THEN 1 END) AS total_tickets,
+        (SELECT COUNT(*) FROM TaiKhoan WHERE vai_tro = 'khach_hang') AS total_customers,
+        AVG(CASE WHEN ngay_xuat_ve >= @dateCondition THEN occupancy ELSE NULL END) AS avg_occupancy
+      FROM Ve v
+      LEFT JOIN (
+        SELECT id_chuyen, AVG(CAST(so_ve AS FLOAT) / so_ghe * 100) AS occupancy
+        FROM (
+          SELECT ct.id_chuyen, COUNT(v.id_ve) AS so_ve, SUM(lt.so_cho_toi_da) AS so_ghe
+          FROM ChuyenTau ct
+          LEFT JOIN Ve v ON ct.id_chuyen = v.id_chuyen
+          JOIN LichChay lc ON ct.id_lich_chay = lc.id_lich_chay
+          JOIN CauHinhToa cto ON cto.id_tau = lc.id_tau
+          JOIN LoaiToa lt ON lt.id_loai_toa = cto.id_loai_toa
+          GROUP BY ct.id_chuyen
+        ) t
+        GROUP BY id_chuyen
+      ) occ ON occ.id_chuyen = v.id_chuyen
+      WHERE v.ngay_xuat_ve >= @dateCondition
+    `, { dateCondition });
+    
+    res.json({ success: true, data: result.recordset[0] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

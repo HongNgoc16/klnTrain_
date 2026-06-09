@@ -143,7 +143,7 @@ const CustomersManagement = () => {
   const columns = [
     { title: 'ID', key: 'id_tai_khoan', width: '50px' },
     { title: 'Họ tên', key: 'ho_ten', width: '160px' },
-    { title: 'Email', key: 'email', width: '200px' },
+    { title: 'Email', key: 'email', width: '180px' },
     { title: 'Số điện thoại', key: 'so_dien_thoai', width: '100px' },
     { title: 'Số vé đã mua', key: 'tong_ve', width: '90px' },
     { title: 'Tổng chi tiêu', key: 'tong_tien', render: (v) => formatCurrency(v) },

@@ -4,7 +4,7 @@ const config = {
   user: 'sa',  // tên user SQL
   password: '12345678',  // mật khẩu
   server: 'NGOCKHUE_10',
-  database: 'KLN_Train',
+  database: 'Train',
   options: {
     encrypt: false,
     trustServerCertificate: true,

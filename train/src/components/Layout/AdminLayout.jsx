@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import Breadcrumb from '../Common/Breadcrumb';
 import './AdminLayout.scss';
 
 const AdminLayout = () => {
@@ -40,7 +41,8 @@ const AdminLayout = () => {
       {/* Main content */}
       <div className={`main-wrapper ${sidebarCollapsed ? 'expanded' : ''}`}>
         <Header toggleSidebar={toggleSidebar} />
-        <main className="main-content">
+        <main className="main-content"> 
+           <Breadcrumb />
           <Outlet />
         </main>
       </div>

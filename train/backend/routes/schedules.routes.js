@@ -1,25 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const { authenticate, authorize } = require('../middleware/auth');
 const scheduleController = require('../controllers/scheduleController');
 
-router.use(authenticate);
-router.use(authorize('quan_tri', 'nhan_vien'));
-
-// Lịch chạy mẫu
+// GET: Lấy danh sách lịch chạy
 router.get('/', scheduleController.getAllSchedules);
-router.post('/', scheduleController.createSchedule);
-router.put('/:id', scheduleController.updateSchedule);
-router.delete('/:id', scheduleController.deleteSchedule);
 
-// Quản lý ga dừng
-router.get('/:id/stations', scheduleController.getStopStations);
+// GET: Lấy chi tiết ga dừng
+router.get('/:id/stations', scheduleController.getScheduleStations);
+
+// POST: Thêm ga dừng
 router.post('/:id/stations', scheduleController.addStopStation);
-router.delete('/:id/stations/:stationId', scheduleController.removeStopStation);
 
-// Chuyến tàu thực tế
-router.get('/trips', scheduleController.getActualTrips);
-router.post('/generate', scheduleController.generateActualTrips);
-router.put('/trips/:id/status', scheduleController.updateTripStatus);
+
+
+// DELETE: Xóa ga dừng
+router.delete('/:id/stations/:stationId', scheduleController.removeStopStation);
 
 module.exports = router;

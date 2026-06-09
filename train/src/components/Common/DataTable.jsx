@@ -2,13 +2,7 @@ import React, { useState } from 'react';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import './DataTable.scss';
 
-const DataTable = ({ 
-  columns, 
-  data, 
-  onRowClick,
-  itemsPerPage = 10,
-  showPagination = true 
-}) => {
+const DataTable = ({ columns, data, onRowClick, itemsPerPage = 10, showPagination = true, showStt = true }) => {
   const [currentPage, setCurrentPage] = useState(1);
   
   const totalPages = Math.ceil(data.length / itemsPerPage);
@@ -20,36 +14,37 @@ const DataTable = ({
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
   
+  // Tạo columns mới với cột STT ở đầu
+  const displayColumns = showStt 
+    ? [{ title: 'STT', key: 'stt', width: '60px', align: 'center', render: (_, __, index) => startIndex + index + 1 }, ...columns]
+    : columns;
+  
   return (
     <div className="data-table-container">
       <div className="table-responsive">
         <table className="data-table">
           <thead>
             <tr>
-              {columns.map((col, idx) => (
-                <th key={idx} style={{ width: col.width }}>{col.title}</th>
+              {displayColumns.map((col, idx) => (
+                <th key={idx} style={{ width: col.width, textAlign: col.align || 'left' }}>
+                  {col.title}
+                </th>
               ))}
             </tr>
           </thead>
           <tbody>
             {currentData.map((row, rowIdx) => (
-              <tr 
-                key={rowIdx} 
-                onClick={() => onRowClick && onRowClick(row)}
-                style={{ cursor: onRowClick ? 'pointer' : 'default' }}
-              >
-                {columns.map((col, colIdx) => (
-                  <td key={colIdx}>
-                    {col.render ? col.render(row[col.key], row) : row[col.key]}
+              <tr key={rowIdx} onClick={() => onRowClick && onRowClick(row)} style={{ cursor: onRowClick ? 'pointer' : 'default' }}>
+                {displayColumns.map((col, colIdx) => (
+                  <td key={colIdx} style={{ textAlign: col.align || 'left' }}>
+                    {col.render ? col.render(row[col.key], row, rowIdx, startIndex + rowIdx) : row[col.key]}
                   </td>
                 ))}
               </tr>
             ))}
             {currentData.length === 0 && (
               <tr>
-                <td colSpan={columns.length} className="empty-row">
-                  Không có dữ liệu
-                </td>
+                <td colSpan={displayColumns.length} className="empty-row">Không có dữ liệu</td>
               </tr>
             )}
           </tbody>
@@ -58,21 +53,15 @@ const DataTable = ({
       
       {showPagination && totalPages > 1 && (
         <div className="pagination">
-          <button onClick={() => goToPage(1)} disabled={currentPage === 1}>
-            Đầu
-          </button>
+          <button onClick={() => goToPage(1)} disabled={currentPage === 1}>Đầu</button>
           <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1}>
             <FiChevronLeft />
           </button>
-          <span className="page-info">
-            Trang {currentPage} / {totalPages}
-          </span>
+          <span className="page-info">Trang {currentPage} / {totalPages}</span>
           <button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages}>
             <FiChevronRight />
           </button>
-          <button onClick={() => goToPage(totalPages)} disabled={currentPage === totalPages}>
-            Cuối
-          </button>
+          <button onClick={() => goToPage(totalPages)} disabled={currentPage === totalPages}>Cuối</button>
         </div>
       )}
     </div>

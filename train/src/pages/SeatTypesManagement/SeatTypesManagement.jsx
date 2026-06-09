@@ -117,8 +117,8 @@ const SeatTypesManagement = () => {
 
   const columns = [
     { title: 'Mã loại ghế', key: 'ma_loai_ghe', width: '100px' },
-    { title: 'Tên loại ghế', key: 'ten_loai_ghe', width: '250px' },
-    { title: 'Loại toa', key: 'ten_loai_toa', width: '200px' },
+    { title: 'Tên loại ghế', key: 'ten_loai_ghe', width: '290px' },
+    { title: 'Loại toa', key: 'ten_loai_toa', width: '260px' },
     { title: 'Hệ số giá', key: 'he_so_gia', render: (v) => `${v}x` },
     { title: 'Trạng thái', key: 'trang_thai', render: (v) => {
       const status = getStatusBadge(v);

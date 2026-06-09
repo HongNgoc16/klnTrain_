@@ -1,0 +1,131 @@
+@import '../../styles/variables';
+
+.users-management {
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+    
+    .page-title { font-size: 24px; color: $dark; margin-bottom: 4px; }
+    .page-subtitle { color: $gray; font-size: 14px; }
+  }
+
+  .filter-bar {
+    background: white; border-radius: 12px; padding: 16px; margin-bottom: 20px;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;
+    box-shadow: $shadow-sm;
+    
+    .search-input {
+      position: relative; flex: 1; max-width: 350px;
+      svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: $gray; }
+      input { width: 100%; padding: 10px 12px 10px 36px; border: 1px solid $light; border-radius: 8px; }
+    }
+    
+    select { padding: 10px 12px; border: 1px solid $light; border-radius: 8px; background: white; }
+  }
+
+  .action-buttons {
+    display: flex; gap: 6px;
+    button {
+      width: 32px; height: 32px; border-radius: 6px; border: none; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; transition: all 0.3s;
+      
+      &.btn-view { background: rgba($info, 0.1); color: $info; &:hover { background: $info; color: white; } }
+      &.btn-edit { background: rgba($warning, 0.1); color: $warning; &:hover { background: $warning; color: white; } }
+      &.btn-status { background: rgba($primary, 0.1); color: $primary; font-size: 16px; &:hover { background: $primary; color: white; } }
+      &.btn-reset { background: rgba($info, 0.1); color: $info; &:hover { background: $info; color: white; } }
+      &.btn-delete { background: rgba($danger, 0.1); color: $danger; &:hover { background: $danger; color: white; } }
+    }
+  }
+
+  .role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    
+    &.role-admin {
+      background: rgba($primary, 0.1);
+      color: $primary;
+    }
+    
+    &.role-staff {
+      background: rgba($info, 0.1);
+      color: $info;
+    }
+    
+    &.role-customer {
+      background: rgba($success, 0.1);
+      color: $success;
+    }
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    
+    &.badge-success { background: rgba($success, 0.1); color: $success; }
+    &.badge-danger { background: rgba($danger, 0.1); color: $danger; }
+  }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .form-group {
+    margin-bottom: 16px;
+    label { display: block; margin-bottom: 6px; font-weight: 500; color: $dark; }
+    input, select { width: 100%; padding: 10px 12px; border: 1px solid $light; border-radius: 8px; }
+  }
+  .form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; padding-top: 16px; border-top: 1px solid $light; }
+
+  .btn-primary { background: $primary; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+  .btn-secondary { background: $gray; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+
+  .user-detail {
+    .detail-header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding-bottom: 20px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid $light;
+      
+      .user-avatar {
+        width: 70px;
+        height: 70px;
+        background: rgba($primary, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+      }
+      
+      .user-name {
+        h3 { font-size: 20px; color: $dark; margin-bottom: 8px; }
+      }
+    }
+    
+    .detail-info {
+      .info-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid $light;
+        
+        svg { color: $gray; width: 20px; }
+        span { flex: 1; color: $dark; }
+      }
+    }
+  }
+}

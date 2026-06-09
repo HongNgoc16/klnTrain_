@@ -1,0 +1,33 @@
+@import '../../styles/variables';
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 0;
+  margin-bottom: 10px;
+  font-size: 13px;
+  
+  .breadcrumb-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: $gray;
+    text-decoration: none;
+    transition: color 0.3s;
+    
+    &:hover {
+      color: $primary;
+    }
+    
+    &.active {
+      color: $primary;
+      font-weight: 500;
+    }
+  }
+  
+  .separator {
+    color: $gray;
+    font-size: 12px;
+  }
+}

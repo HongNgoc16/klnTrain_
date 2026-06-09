@@ -12,8 +12,10 @@ import TrainsManagement from './pages/TrainsManagement/TrainsManagement';
 import StationsManagement from './pages/StationsManagement/StationsManagement';
 import SchedulesManagement from './pages/SchedulesManagement/SchedulesManagement';
 import CustomersManagement from './pages/CustomersManagement/CustomersManagement';
-import PaymentsManagement from './pages/PaymentsManagement/PaymentsManagement';
+import UsersManagement from './pages/UsersManagement/UsersManagement';
+import CarriageTypesManagement from './pages/CarriageTypesManagement/CarriageTypesManagement';
 import SeatTypesManagement from './pages/SeatTypesManagement/SeatTypesManagement';
+import NotificationsManagement from './pages/NotificationsManagement/NotificationsManagement';
 import Reports from './pages/Reports/Reports';
 import Policies from './pages/Policies/Policies';
 import Refunds from './pages/Refunds/Refunds';
@@ -37,10 +39,12 @@ function App() {
             <Route path="tickets" element={<TicketsManagement />} />
             <Route path="trains" element={<TrainsManagement />} />
             <Route path="stations" element={<StationsManagement />} />
+            <Route path="carriage-types" element={<CarriageTypesManagement />} />
             <Route path="seat-types" element={<SeatTypesManagement />} />
             <Route path="schedules" element={<SchedulesManagement />} />
             <Route path="customers" element={<CustomersManagement />} />
-            <Route path="payments" element={<PaymentsManagement />} />
+            <Route path="users" element={<UsersManagement />} />
+            <Route path="notifications" element={<NotificationsManagement />} />
             <Route path="reports" element={<Reports />} />
             <Route path="policies" element={<Policies />} />
             <Route path="refunds" element={<Refunds />} />

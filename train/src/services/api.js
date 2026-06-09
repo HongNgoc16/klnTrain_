@@ -31,6 +31,7 @@ api.interceptors.response.use(
 );
 
 // ==================== DASHBOARD API ====================
+
 export const dashboardAPI = {
   getStats: () => api.get('/dashboard/stats'),
   getRevenueByMonth: () => api.get('/dashboard/revenue-by-month'),
@@ -40,12 +41,7 @@ export const dashboardAPI = {
   getUpcomingTrains: () => api.get('/dashboard/upcoming-trains'),
   getTopStations: () => api.get('/dashboard/top-stations'),
   getCustomerDistribution: () => api.get('/dashboard/customer-distribution'),
-
-  getTotalRoutes: () => api.get('/dashboard/total-routes'),
-  getTotalStations: () => api.get('/dashboard/total-stations'),
-  getTotalTickets7d: () => api.get('/dashboard/total-tickets-7d'),
-  getTotalRevenue7d: () => api.get('/dashboard/total-revenue-7d'),
-  getNewCustomers7d: () => api.get('/dashboard/new-customers-7d')
+  getRates: () => api.get('/dashboard/rates')
 };
 
 // ==================== TICKET API ====================
@@ -139,8 +135,8 @@ export const reportAPI = {
   getRevenueByTrain: (params) => api.get('/reports/revenue/by-train', { params }),
   getOccupancyReport: (params) => api.get('/reports/occupancy', { params }),
   getCancellationReport: (params) => api.get('/reports/cancellations', { params }),
-  getCouponEffectiveness: () => api.get('/reports/coupon-effectiveness'),
-  getTicketsReport: (params) => api.get('/reports/tickets', { params })
+getCustomerDistribution: () => api.get('/reports/customer-distribution'),
+  getSummaryStats: (params) => api.get('/reports/summary', { params })
 };
 
 // ==================== NOTIFICATION API ====================
