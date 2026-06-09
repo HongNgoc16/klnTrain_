@@ -5,7 +5,7 @@ const sequelize = new Sequelize(
   process.env.DB_USER,
   process.env.DB_PASSWORD,
   {
-    host: process.env.DB_SERVER.split('\\')[0], // Chỉ lấy tên máy: DESKTOP-5DF60PC
+    host: process.env.DB_SERVER.split('\\')[0], // Chỉ lấy tên máy
     port: parseInt(process.env.DB_PORT) || 1433,
     dialect: 'mssql',
     dialectOptions: {
@@ -13,8 +13,11 @@ const sequelize = new Sequelize(
         encrypt: false,
         trustServerCertificate: true,
         requestTimeout: 60000,
-        instanceName: process.env.DB_SERVER.split('\\')[1] || 'SQLEXPRESS', // Quan trọng: thêm dòng này
-      },
+        trustedTimeout: false,
+     //   instanceName: process.env.DB_SERVER.split('\\')[1] || 'MSSQLEXPRESS', // Quan trọng: thêm dòng này
+      ...(process.env.DB_SERVER.includes('\\') && {
+          instanceName: process.env.DB_SERVER.split('\\')[1]
+        })      },
     },
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
     pool: {
