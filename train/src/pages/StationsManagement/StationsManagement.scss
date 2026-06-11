@@ -1,5 +1,7 @@
 @import '../../styles/variables';
 @import '../../styles/global';
+
+.admin-app {
 .stations-management {
   .page-header {
     display: flex;
@@ -198,4 +200,5 @@
       color: $danger;
     }
   }
+}
 }

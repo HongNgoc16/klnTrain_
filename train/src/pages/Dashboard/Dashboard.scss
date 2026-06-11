@@ -1,5 +1,6 @@
 @import '../../styles/variables';
 
+.admin-app {
 .dashboard {
   .page-header {
     display: flex;
@@ -564,4 +565,5 @@
       grid-template-columns: 1fr;
     }
   }
+}
 }

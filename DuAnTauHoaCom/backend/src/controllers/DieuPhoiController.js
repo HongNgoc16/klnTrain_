@@ -3,7 +3,7 @@ const { sequelize } = require('../config/database')
 const {
   ChuyenTau, LichChay, Tau, GaTau,
   ToaChuyen, LoaiToa, CauHinhToa, CauHinhGhe,
-  DieuPhoi, LichTrinhThucTe,
+  DieuPhoi, LichTrinhThucTe, LichTrinhChuyen,
   Ve, GheChuyen,
 } = require('../models')
 const { ok, created, badRequest, notFound } = require('../utils/response')
@@ -26,6 +26,18 @@ const fmtTimeVN = (t) => {
   const m = String(t).match(/(\d{2}):(\d{2})/)
   return m ? `${m[1]}:${m[2]}` : '--:--'
 }
+
+// ─── Helper: quy đổi giờ (Date UTC hoặc 'HH:mm[:ss]') <-> số phút trong ngày ─
+const timeToMinutes = (t) => {
+  if (t instanceof Date) return t.getUTCHours() * 60 + t.getUTCMinutes()
+  const m = String(t).match(/(\d{2}):(\d{2})/)
+  return m ? parseInt(m[1]) * 60 + parseInt(m[2]) : 0
+}
+const minutesToTimeStr = (mins) => {
+  const total = ((mins % 1440) + 1440) % 1440
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}:00`
+}
+const addMinutesToTime = (t, addMin) => minutesToTimeStr(timeToMinutes(t) + parseInt(addMin))
 
 // ─── Helper: tính giờ xuất phát mới sau khi cộng số phút trễ ─────
 const calcDelayedTime = (gioKhoiHanh, delayPhut) => {
@@ -301,6 +313,15 @@ const getChuyenTauDetail = async (req, res, next) => {
     )
     const banByToa = Object.fromEntries(veStats.map(r => [parseInt(r.so_toa_thu_tu), parseInt(r.ban)]))
 
+    // Danh sách ga dừng theo lịch trình của chuyến (để chọn "ga ảnh hưởng" khi ghi sự kiện)
+    const lichTrinh = chuyen.LichChay
+      ? await LichTrinhChuyen.findAll({
+          where: { id_lich_chay: chuyen.LichChay.id_lich_chay },
+          include: [{ model: GaTau, attributes: ['id_ga', 'ten_ga', 'ma_ga_viet_tat'] }],
+          order: [['thu_tu_dung', 'ASC']],
+        })
+      : []
+
     ok(res, {
       idChuyen:   chuyen.id_chuyen,
       ngayChay:   chuyen.ngay_chay,
@@ -325,6 +346,14 @@ const getChuyenTauDetail = async (req, res, next) => {
         thoiGian:   e.thoi_gian_tao,
       })),
       tongVeBan: Object.values(banByToa).reduce((s, v) => s + v, 0),
+      lichTrinh: lichTrinh.map(s => ({
+        idGa:      s.id_ga,
+        tenGa:     s.GaTau?.ten_ga,
+        maGa:      s.GaTau?.ma_ga_viet_tat,
+        thuTuDung: s.thu_tu_dung,
+        gioDen:    s.gio_den,
+        gioDi:     s.gio_di,
+      })),
     })
   } catch (err) { next(err) }
 }
@@ -384,27 +413,40 @@ const logSuKien = async (req, res, next) => {
     const tenGaDi   = chuyen?.LichChay?.GaDi?.ten_ga || ''
     const ngayChay  = chuyen ? fmtDateVN(chuyen.ngay_chay) : ''
 
-    // Khi có sự kiện trễ giờ → cập nhật LichTrinhThucTe + đổi trạng thái chuyến
+    // Khi có sự kiện trễ giờ → cập nhật LichTrinhThucTe (ga ảnh hưởng + các ga sau) + đổi trạng thái chuyến
     if (loaiSuKien === 'delay' && delayPhut && chuyen?.LichChay) {
-      const idGaDi     = chuyen.LichChay.id_ga_di
       const idLichChay = chuyen.LichChay.id_lich_chay
-      const [stopInfo] = await sequelize.query(
-        `SELECT thu_tu_dung FROM LichTrinhChuyen WHERE id_lich_chay=${idLichChay} AND id_ga=${idGaDi}`,
-        { type: sequelize.QueryTypes.SELECT }
-      ).catch(() => [])
-      const thuTuDung = stopInfo?.thu_tu_dung ?? 1
-      const ghiChuSql = moTaSafe ? `, ghi_chu = N'${moTaSafe}'` : ''
-      const ghiChuIns = moTaSafe ? `, N'${moTaSafe}'` : ', NULL'
-      await sequelize.query(`
-        MERGE LichTrinhThucTe AS tgt
-        USING (VALUES(${parseInt(id)}, ${idGaDi})) AS src(id_chuyen, id_ga)
-          ON tgt.id_chuyen = src.id_chuyen AND tgt.id_ga = src.id_ga
-        WHEN MATCHED THEN
-          UPDATE SET delay_di_phut = ${parseInt(delayPhut)}, trang_thai = 'delay'${ghiChuSql}
-        WHEN NOT MATCHED THEN
-          INSERT (id_chuyen, id_ga, thu_tu_dung, delay_di_phut, trang_thai, ghi_chu)
-          VALUES (${parseInt(id)}, ${idGaDi}, ${thuTuDung}, ${parseInt(delayPhut)}, 'delay'${ghiChuIns});
-      `).catch(() => {})
+      const idGaTarget = idGaAnhHuong ? parseInt(idGaAnhHuong) : chuyen.LichChay.id_ga_di
+      const delayInt   = parseInt(delayPhut)
+      const ghiChuSql  = moTaSafe ? `, ghi_chu = N'${moTaSafe}'` : ''
+      const ghiChuIns  = moTaSafe ? `, N'${moTaSafe}'` : ', NULL'
+
+      // Lấy toàn bộ ga dừng theo lịch trình, từ ga ảnh hưởng trở đi sẽ được dồn giờ theo số phút trễ
+      const allStops = await LichTrinhChuyen.findAll({
+        where: { id_lich_chay: idLichChay }, order: [['thu_tu_dung', 'ASC']],
+      })
+      const targetStop    = allStops.find(s => s.id_ga === idGaTarget)
+      const tuThuTuDung   = targetStop?.thu_tu_dung ?? 1
+      const affectedStops = allStops.filter(s => s.thu_tu_dung >= tuThuTuDung)
+
+      if (affectedStops.length > 0) {
+        const sqlBatch = affectedStops.map(s => {
+          const gioDenDuKien = addMinutesToTime(s.gio_den, delayInt)
+          const gioDiDuKien  = addMinutesToTime(s.gio_di, delayInt)
+          return `
+            MERGE LichTrinhThucTe AS tgt
+            USING (VALUES(${parseInt(id)}, ${s.id_ga})) AS src(id_chuyen, id_ga)
+              ON tgt.id_chuyen = src.id_chuyen AND tgt.id_ga = src.id_ga
+            WHEN MATCHED THEN
+              UPDATE SET gio_den_du_kien = '${gioDenDuKien}', gio_di_du_kien = '${gioDiDuKien}',
+                         delay_den_phut = ${delayInt}, delay_di_phut = ${delayInt}, trang_thai = 'delay'${ghiChuSql}
+            WHEN NOT MATCHED THEN
+              INSERT (id_chuyen, id_ga, thu_tu_dung, gio_den_du_kien, gio_di_du_kien, delay_den_phut, delay_di_phut, trang_thai, ghi_chu)
+              VALUES (${parseInt(id)}, ${s.id_ga}, ${s.thu_tu_dung}, '${gioDenDuKien}', '${gioDiDuKien}', ${delayInt}, ${delayInt}, 'delay'${ghiChuIns});
+          `
+        }).join('\n')
+        await sequelize.query(sqlBatch).catch(() => {})
+      }
       // Chuyển trạng thái chuyến thành 'dieu_chinh'
       await ChuyenTau.update({ trang_thai: 'dieu_chinh' }, { where: { id_chuyen: id } }).catch(() => {})
     }
@@ -654,16 +696,187 @@ const updateLichChay = async (req, res, next) => {
   } catch (err) { next(err) }
 }
 
-// ─── Sinh chuyến từ lịch chạy (dùng sp_DP_SinhChuyen) ────────────
+// ─── Xóa lịch chạy (chỉ khi chưa có chuyến tàu) ──────────────────
+const deleteLichChay = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const idLichChay = parseInt(id)
+    const lc = await LichChay.findByPk(idLichChay)
+    if (!lc) return notFound(res, 'Không tìm thấy lịch chạy')
+    const soChuyen = await ChuyenTau.count({ where: { id_lich_chay: idLichChay } })
+    if (soChuyen > 0) return badRequest(res, 'Không thể xóa lịch trình vì đã có chuyến tàu')
+    await sequelize.transaction(async (t) => {
+      await LichTrinhChuyen.destroy({ where: { id_lich_chay: idLichChay }, transaction: t })
+      await lc.destroy({ transaction: t })
+    })
+    ok(res, null, 'Xóa lịch chạy thành công')
+  } catch (err) { next(err) }
+}
+
+// ─── Ga dừng (chi tiết lịch trình) ───────────────────────────────
+const getGaDungList = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const list = await LichTrinhChuyen.findAll({
+      where: { id_lich_chay: parseInt(id) },
+      include: [{ model: GaTau, attributes: ['id_ga', 'ten_ga', 'ma_ga_viet_tat'] }],
+      order: [['thu_tu_dung', 'ASC']],
+    })
+    ok(res, list.map(s => ({
+      idLichTrinh:  s.id_lich_trinh,
+      idLichChay:   s.id_lich_chay,
+      thuTuDung:    s.thu_tu_dung,
+      idGa:         s.id_ga,
+      ga:           s.GaTau,
+      gioDen:       s.gio_den,
+      gioDi:        s.gio_di,
+      khoangCachKm: s.khoang_cach_km,
+      thoiGianDung: s.thoi_gian_dung,
+    })))
+  } catch (err) { next(err) }
+}
+
+// Kiểm tra: thứ tự dừng không trùng, giờ đến ≤ giờ đi, khoảng cách tăng dần theo thứ tự
+const validateGaDung = (existing, { thuTuDung, gioDen, gioDi, khoangCachKm }) => {
+  if (String(gioDen) > String(gioDi)) return 'Thời gian đến phải nhỏ hơn hoặc bằng thời gian đi'
+  if (existing.some(s => s.thu_tu_dung === thuTuDung)) return `Thứ tự dừng ${thuTuDung} đã tồn tại`
+  for (const s of existing) {
+    const km = parseFloat(s.khoang_cach_km)
+    if (s.thu_tu_dung < thuTuDung && km >= khoangCachKm) return 'Khoảng cách phải tăng dần theo thứ tự ga dừng'
+    if (s.thu_tu_dung > thuTuDung && km <= khoangCachKm) return 'Khoảng cách phải tăng dần theo thứ tự ga dừng'
+  }
+  return null
+}
+
+const addGaDung = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const idLichChay = parseInt(id)
+    const { thuTuDung, idGa, gioDen, gioDi, khoangCachKm, thoiGianDung } = req.body
+    if (!thuTuDung || !idGa || !gioDen || !gioDi || khoangCachKm == null || thoiGianDung == null)
+      return badRequest(res, 'Vui lòng nhập đầy đủ thông tin ga dừng')
+
+    const lc = await LichChay.findByPk(idLichChay)
+    if (!lc) return notFound(res, 'Không tìm thấy lịch chạy')
+
+    const existing = await LichTrinhChuyen.findAll({ where: { id_lich_chay: idLichChay } })
+    const err = validateGaDung(existing, {
+      thuTuDung: parseInt(thuTuDung), gioDen, gioDi, khoangCachKm: parseFloat(khoangCachKm),
+    })
+    if (err) return badRequest(res, err)
+
+    const row = await LichTrinhChuyen.create({
+      id_lich_chay:   idLichChay,
+      id_ga:          parseInt(idGa),
+      thu_tu_dung:    parseInt(thuTuDung),
+      gio_den:        gioDen,
+      gio_di:         gioDi,
+      khoang_cach_km: parseFloat(khoangCachKm),
+      thoi_gian_dung: parseInt(thoiGianDung),
+    })
+    created(res, { idLichTrinh: row.id_lich_trinh }, 'Thêm ga dừng thành công')
+  } catch (err) { next(err) }
+}
+
+const updateGaDung = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const row = await LichTrinhChuyen.findByPk(id)
+    if (!row) return notFound(res, 'Không tìm thấy ga dừng')
+
+    const { thuTuDung, idGa, gioDen, gioDi, khoangCachKm, thoiGianDung } = req.body
+    if (!thuTuDung || !idGa || !gioDen || !gioDi || khoangCachKm == null || thoiGianDung == null)
+      return badRequest(res, 'Vui lòng nhập đầy đủ thông tin ga dừng')
+
+    const existing = await LichTrinhChuyen.findAll({
+      where: { id_lich_chay: row.id_lich_chay, id_lich_trinh: { [Op.ne]: row.id_lich_trinh } },
+    })
+    const err = validateGaDung(existing, {
+      thuTuDung: parseInt(thuTuDung), gioDen, gioDi, khoangCachKm: parseFloat(khoangCachKm),
+    })
+    if (err) return badRequest(res, err)
+
+    // Độ lệch giờ đi so với trước khi sửa → dồn giờ đến/đi của các ga sau theo cùng độ lệch
+    const deltaMin = timeToMinutes(gioDi) - timeToMinutes(row.gio_di)
+
+    await sequelize.transaction(async (t) => {
+      await row.update({
+        id_ga:          parseInt(idGa),
+        thu_tu_dung:    parseInt(thuTuDung),
+        gio_den:        gioDen,
+        gio_di:         gioDi,
+        khoang_cach_km: parseFloat(khoangCachKm),
+        thoi_gian_dung: parseInt(thoiGianDung),
+      }, { transaction: t })
+
+      if (deltaMin !== 0) {
+        const subsequent = await LichTrinhChuyen.findAll({
+          where: { id_lich_chay: row.id_lich_chay, thu_tu_dung: { [Op.gt]: parseInt(thuTuDung) } },
+          transaction: t,
+        })
+        for (const s of subsequent) {
+          await s.update({
+            gio_den: addMinutesToTime(s.gio_den, deltaMin),
+            gio_di:  addMinutesToTime(s.gio_di, deltaMin),
+          }, { transaction: t })
+        }
+      }
+    })
+
+    ok(res, null, 'Cập nhật ga dừng thành công' + (deltaMin !== 0 ? ' (đã cập nhật giờ các ga sau)' : ''))
+  } catch (err) { next(err) }
+}
+
+const removeGaDung = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const row = await LichTrinhChuyen.findByPk(id)
+    if (!row) return notFound(res, 'Không tìm thấy ga dừng')
+    await row.destroy()
+    ok(res, null, 'Xóa ga dừng thành công')
+  } catch (err) { next(err) }
+}
+
+// ─── Sinh chuyến từ lịch chạy ─────────────────────────────────────
 const sinhChuyenTau = async (req, res, next) => {
   try {
     const { idLichChay, tuNgay, denNgay } = req.body
     if (!idLichChay || !tuNgay || !denNgay) return badRequest(res, 'Thiếu thông tin bắt buộc')
-    const [result] = await sequelize.query(
-      `EXEC sp_DP_SinhChuyen @id_lich_chay=${parseInt(idLichChay)}, @tu_ngay='${tuNgay}', @den_ngay='${denNgay}'`,
-      { type: sequelize.QueryTypes.SELECT }
-    )
-    ok(res, { created: result?.created || 0, skipped: result?.skipped || 0 }, result?.message || 'Thành công')
+
+    const lichChay = await LichChay.findByPk(idLichChay)
+    if (!lichChay) return badRequest(res, 'Lịch chạy không tồn tại')
+
+    const start = new Date(tuNgay)
+    const end = new Date(denNgay)
+    if (isNaN(start) || isNaN(end) || start > end) return badRequest(res, 'Khoảng ngày không hợp lệ')
+
+    const diffDays = Math.round((end - start) / 86400000)
+    if (diffDays > 90) return badRequest(res, 'Tối đa 90 ngày mỗi lần sinh chuyến')
+
+    const existing = await ChuyenTau.findAll({
+      where: {
+        id_lich_chay: idLichChay,
+        ngay_chay: { [Op.between]: [tuNgay, denNgay] },
+      },
+      attributes: ['ngay_chay'],
+    })
+    const existingDates = new Set(existing.map(c => String(c.ngay_chay).slice(0, 10)))
+
+    const toCreate = []
+    let createdCount = 0, skippedCount = 0
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const ngay = d.toISOString().slice(0, 10)
+      if (existingDates.has(ngay)) {
+        skippedCount++
+      } else {
+        toCreate.push({ id_lich_chay: parseInt(idLichChay), ngay_chay: ngay, trang_thai: 'dung_gio' })
+        createdCount++
+      }
+    }
+
+    if (toCreate.length) await ChuyenTau.bulkCreate(toCreate)
+
+    ok(res, { created: createdCount, skipped: skippedCount }, `Sinh ${createdCount} chuyến thành công`)
   } catch (err) { next(err) }
 }
 
@@ -685,6 +898,7 @@ module.exports = {
   getDashboard, getChuyenTauList, getChuyenTauDetail,
   updateTrangThai, logSuKien,
   addToaChuyen, updateToaChuyen, removeToaChuyen, reorderToa,
-  getLichChayList, createLichChay, updateLichChay, sinhChuyenTau,
+  getLichChayList, createLichChay, updateLichChay, deleteLichChay, sinhChuyenTau,
+  getGaDungList, addGaDung, updateGaDung, removeGaDung,
   getTauList, getGaList, getLoaiToaList,
 }

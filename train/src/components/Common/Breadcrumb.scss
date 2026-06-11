@@ -1,5 +1,6 @@
 @import '../../styles/variables';
 
+.admin-app {
 .breadcrumb {
   display: flex;
   align-items: center;
@@ -30,4 +31,5 @@
     color: $gray;
     font-size: 12px;
   }
+}
 }

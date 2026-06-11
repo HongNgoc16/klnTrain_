@@ -3,7 +3,8 @@ import { FiPlus, FiEdit, FiTrash2, FiSearch, FiLayers, FiGrid, FiEye } from 'rea
 import DataTable from '../../components/Common/DataTable';
 import Modal from '../../components/Common/Modal';
 import ConfirmDialog from '../../components/Common/ConfirmDialog';
-import { carriageTypeAPI } from '../../services/api';
+import AlertDialog from '../../components/Common/AlertDialog';
+import { carriageTypeAPI, seatTypeAPI } from '../../services/api';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
 import './CarriageTypesManagement.scss';
 
@@ -16,6 +17,14 @@ const CarriageTypesManagement = () => {
   const [selectedType, setSelectedType] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [viewMode, setViewMode] = useState('card'); // 'card' or 'table'
+  const [showSeatConfigModal, setShowSeatConfigModal] = useState(false);
+  const [seatConfig, setSeatConfig] = useState([]);
+  const [selectedCarriage, setSelectedCarriage] = useState(null);
+  const [alertDialog, setAlertDialog] = useState({ isOpen: false, title: '', message: '', type: 'success' });
+
+  const showAlert = (message, type = 'error', title = type === 'error' ? 'Lỗi' : 'Thành công') => {
+    setAlertDialog({ isOpen: true, title, message, type });
+  };
   const [formData, setFormData] = useState({
     ma_loai_toa: '',
     ten_loai_toa: '',
@@ -43,6 +52,18 @@ const CarriageTypesManagement = () => {
     }
   };
 
+  const loadSeatConfiguration = async (carriage) => {
+    try {
+      const res = await seatTypeAPI.getConfiguration(carriage.id_loai_toa);
+      setSeatConfig(res.data.data || []);
+      setSelectedCarriage(carriage);
+      setShowSeatConfigModal(true);
+    } catch (error) {
+      console.error('Lỗi tải cấu hình ghế:', error);
+      showAlert('Không thể tải cấu hình ghế của loại toa này');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -55,7 +76,7 @@ const CarriageTypesManagement = () => {
       setShowModal(false);
       resetForm();
     } catch (error) {
-      alert(error.response?.data?.message || 'Có lỗi xảy ra');
+      showAlert(error.response?.data?.message || 'Có lỗi xảy ra');
     }
   };
 
@@ -66,7 +87,7 @@ const CarriageTypesManagement = () => {
       setShowConfirm(false);
       setDeleteTarget(null);
     } catch (error) {
-      alert('Không thể xóa loại toa này (đang được sử dụng)');
+      showAlert('Không thể xóa loại toa này (đang được sử dụng)');
     }
   };
 
@@ -193,7 +214,7 @@ const CarriageTypesManagement = () => {
                   </div>
                 </div>
                 <div className="card-footer">
-                  <button className="btn-detail" onClick={() => window.location.href = `/seat-config?carriage=${type.id_loai_toa}`}>
+                  <button className="btn-detail" onClick={() => loadSeatConfiguration(type)}>
                     <FiEye /> Xem cấu hình ghế
                   </button>
                 </div>
@@ -247,6 +268,41 @@ const CarriageTypesManagement = () => {
       </Modal>
 
       <ConfirmDialog isOpen={showConfirm} onClose={() => setShowConfirm(false)} onConfirm={handleDelete} title="Xóa loại toa" message={`Xóa loại toa ${deleteTarget?.ten_loai_toa}?`} confirmText="Xóa" cancelText="Hủy" />
+
+      <AlertDialog isOpen={alertDialog.isOpen} onClose={() => setAlertDialog({ ...alertDialog, isOpen: false })} title={alertDialog.title} message={alertDialog.message} type={alertDialog.type} />
+
+      {/* Modal cấu hình ghế trong toa */}
+      <Modal isOpen={showSeatConfigModal} onClose={() => setShowSeatConfigModal(false)} title={`Cấu hình ghế - ${selectedCarriage?.ten_loai_toa}`} size="lg">
+        <div className="seat-config">
+          <div className="config-stats">
+            <span>Tổng số ghế: {seatConfig.length}</span>
+            <span>Số chỗ tối đa: {selectedCarriage?.so_cho_toi_da}</span>
+          </div>
+          <div className="table-responsive">
+            <table className="config-table">
+              <thead>
+                <tr><th>Số ghế</th><th>Vị trí</th><th>Khoang</th><th>Bên</th><th>Tầng</th><th>Loại ghế</th><th>Hệ số</th></tr>
+              </thead>
+              <tbody>
+                {seatConfig.map((seat, idx) => (
+                  <tr key={idx}>
+                    <td>{seat.so_ghe_trong_toa}</td>
+                    <td className="td--name">{seat.vi_tri || '---'}</td>
+                    <td>{seat.khoang_so || '---'}</td>
+                    <td>{seat.ben || '---'}</td>
+                    <td>{seat.tang === 'Tren' ? 'Trên' : seat.tang === 'Duoi' ? 'Dưới' : seat.tang === 'Giua' ? 'Giữa' : '---'}</td>
+                    <td className="td--name">{seat.ten_loai_ghe}</td>
+                    <td>{seat.he_so_gia}x</td>
+                  </tr>
+                ))}
+                {seatConfig.length === 0 && (
+                  <tr><td colSpan={7} style={{ textAlign: 'center' }}>Chưa có cấu hình ghế cho loại toa này</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

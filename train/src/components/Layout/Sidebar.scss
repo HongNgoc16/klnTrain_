@@ -1,5 +1,6 @@
+.admin-app {
 /* Colors and Styles (Default) */
-:root {
+& {
   --PrimaryColor: #8C1D19;
   --HoverColor: #a82824;
   --paleGreen: #FDF2D6;
@@ -12,7 +13,7 @@
 }
 
 /* Font and Typography */
-:root {
+& {
   --biggestFontSize: 2.5rem;
   --h1FontSize: 1.5rem;
   --h2FontSize: 1.25rem;
@@ -365,4 +366,5 @@
 .grid {
   display: flex;
   flex-direction: column;
+}
 }

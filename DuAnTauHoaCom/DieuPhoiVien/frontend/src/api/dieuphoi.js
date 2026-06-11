@@ -1,6 +1,9 @@
 import api from './client'
 
 export const login           = (email, matKhau) => api.post('/auth/login', { email, matKhau })
+export const getProfile      = () => api.get('/auth/profile')
+export const updateProfile   = (data) => api.put('/auth/profile', data)
+export const changePassword  = (data) => api.put('/auth/change-password', data)
 export const getDashboard    = () => api.get('/dispatch/dashboard')
 export const getChuyenList   = (params) => api.get('/dispatch/chuyen-tau', { params })
 export const getChuyenDetail = (id) => api.get(`/dispatch/chuyen-tau/${id}`)
@@ -13,7 +16,12 @@ export const reorderToa      = (idChuyen, order) => api.put(`/dispatch/chuyen-ta
 export const getLichChay     = (params) => api.get('/dispatch/lich-chay', { params })
 export const createLichChay  = (data) => api.post('/dispatch/lich-chay', data)
 export const updateLichChay  = (id, data) => api.put(`/dispatch/lich-chay/${id}`, data)
+export const deleteLichChay  = (id) => api.delete(`/dispatch/lich-chay/${id}`)
 export const sinhChuyen      = (data) => api.post('/dispatch/sinh-chuyen', data)
+export const getGaDung       = (idLichChay) => api.get(`/dispatch/lich-chay/${idLichChay}/ga-dung`)
+export const addGaDung       = (idLichChay, data) => api.post(`/dispatch/lich-chay/${idLichChay}/ga-dung`, data)
+export const updateGaDung    = (id, data) => api.put(`/dispatch/ga-dung/${id}`, data)
+export const removeGaDung    = (id) => api.delete(`/dispatch/ga-dung/${id}`)
 export const getTauList      = () => api.get('/dispatch/tau')
 export const getGaList       = () => api.get('/dispatch/ga')
 export const getLoaiToaList  = () => api.get('/dispatch/loai-toa')

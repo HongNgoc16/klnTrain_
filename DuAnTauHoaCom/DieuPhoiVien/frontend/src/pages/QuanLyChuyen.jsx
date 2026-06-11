@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { FiCalendar, FiSearch, FiAlertTriangle, FiClock, FiX, FiCheckCircle, FiXCircle, FiLoader, FiInfo } from 'react-icons/fi'
+import { FaTrain } from 'react-icons/fa'
 import { getChuyenList, getTauList, sinhChuyen, getLichChay, updateTrangThai, logSuKien } from '../api/dieuphoi'
 import StatusBadge from '../components/StatusBadge'
 
@@ -45,13 +47,13 @@ export default function QuanLyChuyen() {
   const [sinhForm, setSinhForm] = useState({ idLichChay: '', tuNgay: today, denNgay: today })
   const [lichList, setLichList] = useState([])
   const [sinhLoading, setSinhLoading] = useState(false)
-  const [sinhMsg, setSinhMsg] = useState('')
+  const [sinhMsg, setSinhMsg] = useState({ text: '', type: '' })
 
   // Điều chỉnh lịch (delay) modal
   const [dieuChinhModal, setDieuChinhModal] = useState({ open: false, idChuyen: null, maTau: '' })
   const [dieuChinhForm, setDieuChinhForm] = useState({ delayPhut: '', moTa: '' })
   const [dieuChinhLoading, setDieuChinhLoading] = useState(false)
-  const [dieuChinhMsg, setDieuChinhMsg] = useState('')
+  const [dieuChinhMsg, setDieuChinhMsg] = useState({ text: '', type: '' })
 
   const loadData = useCallback(() => {
     setLoading(true); setApiError('')
@@ -65,19 +67,19 @@ export default function QuanLyChuyen() {
   useEffect(() => { getTauList().then(r => { const d = r.data || r; setTauList(Array.isArray(d) ? d : []) }).catch(() => {}) }, [])
 
   const openSinh = () => {
-    setShowSinh(true); setSinhMsg('')
+    setShowSinh(true); setSinhMsg({ text: '', type: '' })
     getLichChay().then(r => { const d = r.data || r; setLichList(Array.isArray(d) ? d : []) }).catch(() => {})
   }
 
   const handleSinh = async () => {
     if (!sinhForm.idLichChay) return
-    setSinhLoading(true); setSinhMsg('')
+    setSinhLoading(true); setSinhMsg({ text: '', type: '' })
     try {
       const res = await sinhChuyen(sinhForm)
       const d = res.data || res
-      setSinhMsg(`✅ Tạo ${d.created} chuyến, bỏ qua ${d.skipped} (đã có)`)
+      setSinhMsg({ text: `Tạo ${d.created} chuyến, bỏ qua ${d.skipped} (đã có)`, type: 'success' })
       loadData()
-    } catch (e) { setSinhMsg('❌ ' + e.message) }
+    } catch (e) { setSinhMsg({ text: e.message, type: 'error' }) }
     finally { setSinhLoading(false) }
   }
 
@@ -90,25 +92,25 @@ export default function QuanLyChuyen() {
   const openDieuChinh = (c) => {
     setDieuChinhModal({ open: true, idChuyen: c.idChuyen, maTau: c.tau?.so_hieu || '' })
     setDieuChinhForm({ delayPhut: '', moTa: '' })
-    setDieuChinhMsg('')
+    setDieuChinhMsg({ text: '', type: '' })
   }
 
   const handleDieuChinh = async () => {
     if (!dieuChinhForm.delayPhut || parseInt(dieuChinhForm.delayPhut) <= 0) {
-      setDieuChinhMsg('❌ Vui lòng nhập số phút trễ hợp lệ')
+      setDieuChinhMsg({ text: 'Vui lòng nhập số phút trễ hợp lệ', type: 'error' })
       return
     }
-    setDieuChinhLoading(true); setDieuChinhMsg('')
+    setDieuChinhLoading(true); setDieuChinhMsg({ text: '', type: '' })
     try {
       await logSuKien(dieuChinhModal.idChuyen, {
         loaiSuKien: 'delay',
         delayPhut: parseInt(dieuChinhForm.delayPhut),
         moTa: dieuChinhForm.moTa || `Chuyến trễ ${dieuChinhForm.delayPhut} phút`,
       })
-      setDieuChinhMsg(`✅ Đã ghi nhận trễ ${dieuChinhForm.delayPhut} phút. Trạng thái chuyến chuyển sang "Điều chỉnh".`)
+      setDieuChinhMsg({ text: `Đã ghi nhận trễ ${dieuChinhForm.delayPhut} phút. Trạng thái chuyến chuyển sang "Điều chỉnh".`, type: 'success' })
       setTimeout(() => { setDieuChinhModal({ open: false, idChuyen: null, maTau: '' }); loadData() }, 2000)
     } catch (e) {
-      setDieuChinhMsg('❌ ' + (e.message || 'Lỗi ghi nhận điều chỉnh'))
+      setDieuChinhMsg({ text: e.message || 'Lỗi ghi nhận điều chỉnh', type: 'error' })
     } finally { setDieuChinhLoading(false) }
   }
 
@@ -120,7 +122,7 @@ export default function QuanLyChuyen() {
     <div className="p-6 space-y-5">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-gray-400">
-        <button onClick={() => navigate('/')} className="hover:text-blue-600 flex items-center gap-1">← Tổng quan</button>
+        <button onClick={() => navigate('/dispatcher')} className="hover:text-[#8C1D19] flex items-center gap-1">← Tổng quan</button>
         <span>/</span>
         <span className="text-gray-700 font-medium">Quản lý Chuyến Tàu</span>
       </div>
@@ -128,11 +130,11 @@ export default function QuanLyChuyen() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">🚂 Quản lý Chuyến Tàu</h1>
+          <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><FaTrain className="text-[#8C1D19]" /> Quản lý Chuyến Tàu</h1>
           <p className="text-gray-500 text-sm mt-0.5">Tìm kiếm, theo dõi và điều phối các chuyến tàu</p>
         </div>
-        <button onClick={openSinh} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors">
-          🗓 Sinh chuyến tàu
+        <button onClick={openSinh} className="flex items-center gap-2 bg-[#8C1D19] text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#6b1411] transition-colors">
+          <FiCalendar /> Sinh chuyến tàu
         </button>
       </div>
 
@@ -141,17 +143,17 @@ export default function QuanLyChuyen() {
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">Từ ngày</label>
           <input type="date" value={f.ngay} onChange={e => setFilters(p => ({...p, ngay: e.target.value, page: 1}))}
-            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-blue-400 outline-none" />
+            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-[#8C1D19] outline-none" />
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">Đến ngày</label>
           <input type="date" value={f.ngayDen} onChange={e => setFilters(p => ({...p, ngayDen: e.target.value, page: 1}))}
-            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-blue-400 outline-none" />
+            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-[#8C1D19] outline-none" />
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">Tàu</label>
           <select value={f.idTau} onChange={e => setFilters(p => ({...p, idTau: e.target.value, page: 1}))}
-            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-blue-400 outline-none min-w-[140px]">
+            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-[#8C1D19] outline-none min-w-[140px]">
             <option value="">Tất cả tàu</option>
             {tauList.map(t => <option key={t.id_tau} value={t.id_tau}>{t.so_hieu} — {t.ten_tau}</option>)}
           </select>
@@ -159,18 +161,18 @@ export default function QuanLyChuyen() {
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">Trạng thái</label>
           <select value={f.trangThai} onChange={e => setFilters(p => ({...p, trangThai: e.target.value, page: 1}))}
-            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-blue-400 outline-none min-w-[160px]">
+            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-[#8C1D19] outline-none min-w-[160px]">
             {TRANG_THAI_OPT.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
           </select>
         </div>
-        <button onClick={loadData} className="bg-gray-800 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-gray-700">
-          🔍 Tìm kiếm
+        <button onClick={loadData} className="bg-gray-800 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-gray-700 flex items-center gap-2">
+          <FiSearch /> Tìm kiếm
         </button>
       </div>
 
       {apiError && (
-        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-medium">
-          ❌ Lỗi tải dữ liệu: {apiError}
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-medium flex items-center gap-2">
+          <FiAlertTriangle className="shrink-0" /> Lỗi tải dữ liệu: {apiError}
         </div>
       )}
 
@@ -178,7 +180,7 @@ export default function QuanLyChuyen() {
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
         <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
           <span className="text-sm text-gray-500 font-medium">Tổng: {total} chuyến</span>
-          {loading && <span className="text-xs text-blue-500 animate-pulse">Đang tải...</span>}
+          {loading && <span className="text-xs text-[#8C1D19] animate-pulse">Đang tải...</span>}
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -197,7 +199,7 @@ export default function QuanLyChuyen() {
                 <tr key={c.idChuyen} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3.5 font-mono text-sm text-gray-600">{fmtDate(c.ngayChay)}</td>
                   <td className="px-4 py-3.5">
-                    <span className="font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-lg">{c.tau?.so_hieu}</span>
+                    <span className="font-bold text-[#8C1D19] bg-[#8C1D19]/10 px-2 py-0.5 rounded-lg">{c.tau?.so_hieu}</span>
                   </td>
                   <td className="px-4 py-3.5">
                     <p className="font-medium text-gray-800">{c.gaDi?.ten_ga}</p>
@@ -216,20 +218,20 @@ export default function QuanLyChuyen() {
                   </td>
                   <td className="px-4 py-3.5">
                     <div className="flex gap-1.5 flex-wrap">
-                      <button onClick={() => navigate(`/chuyen-tau/${c.idChuyen}`)}
-                        className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-100">
+                      <button onClick={() => navigate(`/dispatcher/chuyen-tau/${c.idChuyen}`)}
+                        className="px-2.5 py-1 bg-[#8C1D19]/10 text-[#8C1D19] rounded-lg text-xs font-medium hover:bg-[#8C1D19]/20">
                         Chi tiết
                       </button>
                       {/* Chuyến dừng giờ (chưa xuất phát): Điều chỉnh lịch + Hủy */}
                       {c.trangThai === 'dung_gio' && (
                         <>
                           <button onClick={() => openDieuChinh(c)}
-                            className="px-2.5 py-1 bg-orange-50 text-orange-700 rounded-lg text-xs font-medium hover:bg-orange-100">
-                            🕐 Điều chỉnh
+                            className="px-2.5 py-1 bg-orange-50 text-orange-700 rounded-lg text-xs font-medium hover:bg-orange-100 flex items-center gap-1">
+                            <FiClock /> Điều chỉnh
                           </button>
                           <button onClick={() => quickStatus(c.idChuyen, 'huy')}
-                            className="px-2.5 py-1 bg-red-50 text-red-600 rounded-lg text-xs font-medium hover:bg-red-100">
-                            ✕ Hủy
+                            className="px-2.5 py-1 bg-red-50 text-red-600 rounded-lg text-xs font-medium hover:bg-red-100 flex items-center gap-1">
+                            <FiX /> Hủy
                           </button>
                         </>
                       )}
@@ -258,14 +260,14 @@ export default function QuanLyChuyen() {
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
             <div className="px-6 py-5 border-b">
-              <h3 className="text-lg font-bold text-gray-800">🗓 Sinh chuyến từ lịch chạy</h3>
+              <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2"><FiCalendar /> Sinh chuyến từ lịch chạy</h3>
               <p className="text-sm text-gray-500 mt-0.5">Tạo hàng loạt chuyến tàu theo khoảng ngày</p>
             </div>
             <div className="px-6 py-5 space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Lịch chạy</label>
                 <select value={sinhForm.idLichChay} onChange={e => setSinhForm(p => ({...p, idLichChay: e.target.value}))}
-                  className="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-blue-400 outline-none">
+                  className="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-[#8C1D19] outline-none">
                   <option value="">-- Chọn lịch chạy --</option>
                   {lichList.map(l => (
                     <option key={l.id_lich_chay} value={l.id_lich_chay}>
@@ -278,21 +280,22 @@ export default function QuanLyChuyen() {
                 <div key={k}>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">{l}</label>
                   <input type="date" value={sinhForm[k]} onChange={e => setSinhForm(p => ({...p, [k]: e.target.value}))}
-                    className="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-blue-400 outline-none" />
+                    className="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-[#8C1D19] outline-none" />
                 </div>
               ))}
-              {sinhMsg && (
-                <div className={`rounded-xl px-4 py-3 text-sm font-medium ${sinhMsg.startsWith('✅') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                  {sinhMsg}
+              {sinhMsg.text && (
+                <div className={`rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2 ${sinhMsg.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                  {sinhMsg.type === 'success' ? <FiCheckCircle className="shrink-0" /> : <FiXCircle className="shrink-0" />}
+                  {sinhMsg.text}
                 </div>
               )}
             </div>
             <div className="px-6 py-4 border-t flex gap-3">
               <button onClick={handleSinh} disabled={!sinhForm.idLichChay || sinhLoading}
-                className="flex-1 bg-blue-600 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-blue-700 disabled:opacity-50">
-                {sinhLoading ? '⏳ Đang sinh...' : '🗓 Sinh chuyến'}
+                className="flex-1 bg-[#8C1D19] text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-[#6b1411] disabled:opacity-50 flex items-center justify-center gap-2">
+                {sinhLoading ? <><FiLoader className="animate-spin" /> Đang sinh...</> : <><FiCalendar /> Sinh chuyến</>}
               </button>
-              <button onClick={() => { setShowSinh(false); setSinhMsg('') }}
+              <button onClick={() => { setShowSinh(false); setSinhMsg({ text: '', type: '' }) }}
                 className="flex-1 border-2 border-gray-200 rounded-xl py-2.5 text-sm font-medium hover:bg-gray-50">
                 Đóng
               </button>
@@ -306,9 +309,9 @@ export default function QuanLyChuyen() {
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
             <div className="px-6 py-5 border-b">
-              <h3 className="text-lg font-bold text-gray-800">🕐 Điều chỉnh lịch chạy</h3>
+              <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2"><FiClock /> Điều chỉnh lịch chạy</h3>
               <p className="text-sm text-gray-500 mt-0.5">
-                Tàu <span className="font-semibold text-blue-700">{dieuChinhModal.maTau}</span> — ghi nhận chậm giờ vào lịch thực tế
+                Tàu <span className="font-semibold text-[#8C1D19]">{dieuChinhModal.maTau}</span> — ghi nhận chậm giờ vào lịch thực tế
               </p>
             </div>
             <div className="px-6 py-5 space-y-4">
@@ -325,19 +328,20 @@ export default function QuanLyChuyen() {
                   rows={3} className="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-orange-400 outline-none resize-none"
                   placeholder="Nguyên nhân chậm giờ..." />
               </div>
-              {dieuChinhMsg && (
-                <div className={`rounded-xl px-4 py-3 text-sm font-medium ${dieuChinhMsg.startsWith('✅') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                  {dieuChinhMsg}
+              {dieuChinhMsg.text && (
+                <div className={`rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2 ${dieuChinhMsg.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                  {dieuChinhMsg.type === 'success' ? <FiCheckCircle className="shrink-0" /> : <FiXCircle className="shrink-0" />}
+                  {dieuChinhMsg.text}
                 </div>
               )}
-              <p className="text-xs text-gray-400">
-                ⓘ Hệ thống sẽ cập nhật lịch trình thực tế (LichTrinhThucTe) và chuyển trạng thái chuyến sang "Điều chỉnh".
+              <p className="text-xs text-gray-400 flex items-start gap-1.5">
+                <FiInfo className="shrink-0 mt-0.5" /> Hệ thống sẽ cập nhật lịch trình thực tế (LichTrinhThucTe) và chuyển trạng thái chuyến sang "Điều chỉnh".
               </p>
             </div>
             <div className="px-6 py-4 border-t flex gap-3">
               <button onClick={handleDieuChinh} disabled={!dieuChinhForm.delayPhut || dieuChinhLoading}
-                className="flex-1 bg-orange-500 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-orange-600 disabled:opacity-50">
-                {dieuChinhLoading ? '⏳ Đang ghi nhận...' : '🕐 Xác nhận điều chỉnh'}
+                className="flex-1 bg-orange-500 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-orange-600 disabled:opacity-50 flex items-center justify-center gap-2">
+                {dieuChinhLoading ? <><FiLoader className="animate-spin" /> Đang ghi nhận...</> : <><FiClock /> Xác nhận điều chỉnh</>}
               </button>
               <button onClick={() => setDieuChinhModal({ open: false, idChuyen: null, maTau: '' })}
                 className="flex-1 border-2 border-gray-200 rounded-xl py-2.5 text-sm font-medium hover:bg-gray-50">

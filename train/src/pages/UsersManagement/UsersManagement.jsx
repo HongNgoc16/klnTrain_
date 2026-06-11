@@ -6,6 +6,7 @@ import {
 import DataTable from '../../components/Common/DataTable';
 import Modal from '../../components/Common/Modal';
 import ConfirmDialog from '../../components/Common/ConfirmDialog';
+import AlertDialog from '../../components/Common/AlertDialog';
 import { userAPI } from '../../services/api';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
 import './UsersManagement.scss';
@@ -21,6 +22,15 @@ const UsersManagement = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [showStatusConfirm, setShowStatusConfirm] = useState(false);
+  const [statusTarget, setStatusTarget] = useState(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetTarget, setResetTarget] = useState(null);
+  const [alertDialog, setAlertDialog] = useState({ isOpen: false, title: '', message: '', type: 'success' });
+
+  const showAlert = (message, type = 'error', title = type === 'error' ? 'Lỗi' : 'Thành công') => {
+    setAlertDialog({ isOpen: true, title, message, type });
+  };
   const [formData, setFormData] = useState({
     email: '',
     ho_ten: '',
@@ -45,9 +55,7 @@ const UsersManagement = () => {
       // Mock data
       setUsers([
         { id_tai_khoan: 1, email: 'admin@klntrain.vn', ho_ten: 'Nguyễn Quản Trị', so_dien_thoai: '0912345678', vai_tro: 'quan_tri', trang_thai: 'hoat_dong', ngay_tao: '2024-01-15', ngay_sinh: '1985-03-15', gioi_tinh: 'nam' },
-        { id_tai_khoan: 2, email: 'nv1@klntrain.vn', ho_ten: 'Trần Thị Nhân Viên', so_dien_thoai: '0923456789', vai_tro: 'nhan_vien', trang_thai: 'hoat_dong', ngay_tao: '2024-02-20', ngay_sinh: '1992-07-20', gioi_tinh: 'nu' },
-        { id_tai_khoan: 3, email: 'nv2@klntrain.vn', ho_ten: 'Lê Văn Bán Vé', so_dien_thoai: '0934567890', vai_tro: 'nhan_vien', trang_thai: 'bi_khoa', ngay_tao: '2024-03-10', ngay_sinh: '1990-11-05', gioi_tinh: 'nam' }
-      ]);
+        ]);
     } finally {
       setLoading(false);
     }
@@ -64,54 +72,71 @@ const UsersManagement = () => {
           gioi_tinh: formData.gioi_tinh,
           vai_tro: formData.vai_tro
         });
-        alert('Cập nhật người dùng thành công');
+        setShowModal(false);
+        resetForm();
+        showAlert('Cập nhật người dùng thành công', 'success');
       } else {
         await userAPI.create(formData);
-        alert('Thêm người dùng thành công');
+        setShowModal(false);
+        resetForm();
+        showAlert('Thêm người dùng thành công', 'success');
       }
       await loadUsers();
-      setShowModal(false);
-      resetForm();
     } catch (error) {
-      alert(error.response?.data?.message || 'Có lỗi xảy ra');
+      showAlert(error.response?.data?.message || 'Có lỗi xảy ra', 'error');
     }
   };
 
   const handleDelete = async () => {
     try {
       await userAPI.delete(deleteTarget.id_tai_khoan);
-      alert('Xóa người dùng thành công');
-      await loadUsers();
       setShowConfirm(false);
       setDeleteTarget(null);
+      showAlert('Xóa người dùng thành công', 'success');
+      await loadUsers();
     } catch (error) {
-      alert('Không thể xóa người dùng này');
+      setShowConfirm(false);
+      showAlert('Không thể xóa người dùng này', 'error');
     }
   };
 
-  const handleStatusToggle = async (user) => {
-    const newStatus = user.trang_thai === 'hoat_dong' ? 'bi_khoa' : 'hoat_dong';
+  const handleStatusToggle = (user) => {
+    setStatusTarget(user);
+    setShowStatusConfirm(true);
+  };
+
+  const confirmStatusToggle = async () => {
+    const newStatus = statusTarget.trang_thai === 'hoat_dong' ? 'bi_khoa' : 'hoat_dong';
     const actionText = newStatus === 'hoat_dong' ? 'mở khóa' : 'khóa';
-    
-    if (window.confirm(`${actionText.toUpperCase()} tài khoản ${user.ho_ten}?`)) {
-      try {
-        await userAPI.updateStatus(user.id_tai_khoan, { trang_thai: newStatus });
-        alert(`Đã ${actionText} tài khoản thành công`);
-        await loadUsers();
-      } catch (error) {
-        alert('Có lỗi xảy ra');
-      }
+
+    try {
+      await userAPI.updateStatus(statusTarget.id_tai_khoan, { trang_thai: newStatus });
+      setShowStatusConfirm(false);
+      setStatusTarget(null);
+      showAlert(`Đã ${actionText} tài khoản thành công`, 'success');
+      await loadUsers();
+    } catch (error) {
+      setShowStatusConfirm(false);
+      setStatusTarget(null);
+      showAlert('Có lỗi xảy ra', 'error');
     }
   };
 
-  const handleResetPassword = async (user) => {
-    if (window.confirm(`Đặt lại mật khẩu cho ${user.ho_ten}? Mật khẩu mới sẽ là 123456`)) {
-      try {
-        await userAPI.resetPassword(user.id_tai_khoan);
-        alert('Đặt lại mật khẩu thành công');
-      } catch (error) {
-        alert('Đặt lại mật khẩu thất bại');
-      }
+  const handleResetPassword = (user) => {
+    setResetTarget(user);
+    setShowResetConfirm(true);
+  };
+
+  const confirmResetPassword = async () => {
+    try {
+      await userAPI.resetPassword(resetTarget.id_tai_khoan);
+      setShowResetConfirm(false);
+      setResetTarget(null);
+      showAlert('Đặt lại mật khẩu thành công', 'success');
+    } catch (error) {
+      setShowResetConfirm(false);
+      setResetTarget(null);
+      showAlert('Đặt lại mật khẩu thất bại', 'error');
     }
   };
 
@@ -143,7 +168,7 @@ const UsersManagement = () => {
   };
 
   const columns = [
-    { title: 'ID', key: 'id_tai_khoan', width: '45px' },
+   
     { title: 'Email', key: 'email', width: '160px' },
     { title: 'Họ tên', key: 'ho_ten', width: '150px' },
     { title: 'Số điện thoại', key: 'so_dien_thoai', width: '120px' },
@@ -305,6 +330,28 @@ const UsersManagement = () => {
       </Modal>
 
       <ConfirmDialog isOpen={showConfirm} onClose={() => setShowConfirm(false)} onConfirm={handleDelete} title="Xóa người dùng" message={`Xóa người dùng ${deleteTarget?.ho_ten}?`} confirmText="Xóa" cancelText="Hủy" />
+
+      <ConfirmDialog
+        isOpen={showStatusConfirm}
+        onClose={() => setShowStatusConfirm(false)}
+        onConfirm={confirmStatusToggle}
+        title={statusTarget?.trang_thai === 'hoat_dong' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
+        message={`${statusTarget?.trang_thai === 'hoat_dong' ? 'KHÓA' : 'MỞ KHÓA'} tài khoản ${statusTarget?.ho_ten}?`}
+        confirmText={statusTarget?.trang_thai === 'hoat_dong' ? 'Khóa' : 'Mở khóa'}
+        cancelText="Hủy"
+      />
+
+      <ConfirmDialog
+        isOpen={showResetConfirm}
+        onClose={() => setShowResetConfirm(false)}
+        onConfirm={confirmResetPassword}
+        title="Đặt lại mật khẩu"
+        message={`Đặt lại mật khẩu cho ${resetTarget?.ho_ten}? Mật khẩu mới sẽ là 123456`}
+        confirmText="Đặt lại"
+        cancelText="Hủy"
+      />
+
+      <AlertDialog isOpen={alertDialog.isOpen} onClose={() => setAlertDialog({ ...alertDialog, isOpen: false })} title={alertDialog.title} message={alertDialog.message} type={alertDialog.type} />
     </div>
   );
 };

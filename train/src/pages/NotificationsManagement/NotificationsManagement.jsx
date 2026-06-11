@@ -7,6 +7,7 @@ import {
 import DataTable from '../../components/Common/DataTable';
 import Modal from '../../components/Common/Modal';
 import ConfirmDialog from '../../components/Common/ConfirmDialog';
+import AlertDialog from '../../components/Common/AlertDialog';
 import { notificationAPI } from '../../services/api';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
 import './NotificationsManagement.scss';
@@ -21,6 +22,11 @@ const NotificationsManagement = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedNotif, setSelectedNotif] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [alertDialog, setAlertDialog] = useState({ isOpen: false, title: '', message: '', type: 'success' });
+
+  const showAlert = (message, type = 'error', title = type === 'error' ? 'Lỗi' : 'Thành công') => {
+    setAlertDialog({ isOpen: true, title, message, type });
+  };
   const [formData, setFormData] = useState({
     tieu_de: '',
     noi_dung: '',
@@ -60,7 +66,9 @@ const NotificationsManagement = () => {
           loai: formData.loai,
           lien_ket: formData.lien_ket
         });
-        alert('Đã gửi thông báo đến tất cả người dùng');
+        setShowSendModal(false);
+        resetForm();
+        showAlert('Đã gửi thông báo đến tất cả người dùng', 'success');
       } else {
         await notificationAPI.sendGroup({
           vai_tro: formData.gui_den,
@@ -69,24 +77,25 @@ const NotificationsManagement = () => {
           loai: formData.loai,
           lien_ket: formData.lien_ket
         });
-        alert(`Đã gửi thông báo đến nhóm ${formData.gui_den}`);
+        setShowSendModal(false);
+        resetForm();
+        showAlert(`Đã gửi thông báo đến nhóm ${formData.gui_den}`, 'success');
       }
       await loadNotifications();
-      setShowSendModal(false);
-      resetForm();
     } catch (error) {
-      alert('Có lỗi xảy ra khi gửi thông báo');
+      showAlert('Có lỗi xảy ra khi gửi thông báo', 'error');
     }
   };
 
   const handleDelete = async () => {
     try {
       await notificationAPI.delete(deleteTarget.id_thong_bao);
-      await loadNotifications();
       setShowConfirm(false);
       setDeleteTarget(null);
+      await loadNotifications();
     } catch (error) {
-      alert('Không thể xóa thông báo');
+      setShowConfirm(false);
+      showAlert('Không thể xóa thông báo', 'error');
     }
   };
 
@@ -276,6 +285,8 @@ const NotificationsManagement = () => {
       </Modal>
 
       <ConfirmDialog isOpen={showConfirm} onClose={() => setShowConfirm(false)} onConfirm={handleDelete} title="Xóa thông báo" message={`Xóa thông báo "${deleteTarget?.tieu_de}"?`} confirmText="Xóa" cancelText="Hủy" />
+
+      <AlertDialog isOpen={alertDialog.isOpen} onClose={() => setAlertDialog({ ...alertDialog, isOpen: false })} title={alertDialog.title} message={alertDialog.message} type={alertDialog.type} />
     </div>
   );
 };

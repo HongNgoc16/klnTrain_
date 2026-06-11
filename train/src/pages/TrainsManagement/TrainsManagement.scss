@@ -1,4 +1,6 @@
 @import '../../styles/variables';
+
+.admin-app {
 .trains-management {
   .page-header {
     display: flex;
@@ -247,4 +249,5 @@
     font-size: 14px;
     color: $gray;
   }
+}
 }

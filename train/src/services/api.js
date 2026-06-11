@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'http://localhost:8000/api/admin';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -24,7 +24,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('admin_token');
       localStorage.removeItem('admin_user');
-      window.location.href = '/login';
+      window.location.href = '/admin/login';
     }
     return Promise.reject(error);
   }
@@ -49,6 +49,7 @@ export const ticketAPI = {
   getAll: () => api.get('/tickets'),
   getById: (id) => api.get(`/tickets/${id}`),
   cancel: (id, data) => api.put(`/tickets/${id}/cancel`, data),
+  confirm: (id) => api.put(`/tickets/${id}/confirm`),
   autoUpdateStatus: (id) => api.put(`/tickets/${id}/auto-update`),
   getStats: () => api.get('/tickets/stats')
 };
@@ -185,10 +186,13 @@ export const seatTypeAPI = {
 // Policy API
 export const policyAPI = {
   getCustomerDiscounts: () => api.get('/policies/customer-discounts'),
+  createCustomerDiscount: (data) => api.post('/policies/customer-discounts', data),
   updateCustomerDiscount: (id, data) => api.put(`/policies/customer-discounts/${id}`, data),
   getCancelFees: () => api.get('/policies/cancel-fees'),
+  createCancelFee: (data) => api.post('/policies/cancel-fees', data),
   updateCancelFee: (id, data) => api.put(`/policies/cancel-fees/${id}`, data),
   getOccasionPolicies: () => api.get('/policies/occasion-policies'),
+  createOccasionPolicy: (data) => api.post('/policies/occasion-policies', data),
   updateOccasionPolicy: (id, data) => api.put(`/policies/occasion-policies/${id}`, data),
   getBasePrice: () => api.get('/policies/base-price'),
   getSeatFactors: () => api.get('/policies/seat-factors')

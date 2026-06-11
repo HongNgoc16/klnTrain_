@@ -1,0 +1,17 @@
+{
+  "name": "klntrain-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Chạy toàn bộ hệ thống KLN Train (backend + portal khách hàng + portal điều phối + portal quản trị)",
+  "scripts": {
+    "dev:backend": "npm --prefix DuAnTauHoaCom/backend run dev",
+    "dev:user": "npm --prefix DuAnTauHoaCom/frontend run dev",
+    "dev:dieuphoi": "npm --prefix DuAnTauHoaCom/DieuPhoiVien/frontend run dev",
+    "dev:admin": "npm --prefix train start",
+    "dev": "concurrently -n BACKEND,USER,DIEUPHOI,ADMIN -c blue,green,yellow,magenta \"npm run dev:backend\" \"npm run dev:user\" \"npm run dev:dieuphoi\" \"npm run dev:admin\"",
+    "install:all": "npm --prefix DuAnTauHoaCom/backend install && npm --prefix DuAnTauHoaCom/frontend install && npm --prefix DuAnTauHoaCom/DieuPhoiVien/frontend install && npm --prefix train install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

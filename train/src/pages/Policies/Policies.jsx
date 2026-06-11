@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { FiEdit, FiSave, FiX } from 'react-icons/fi';
+import { FiEdit, FiSave, FiX, FiPlus } from 'react-icons/fi';
 import { policyAPI } from '../../services/api';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
+import Modal from '../../components/Common/Modal';
+import AlertDialog from '../../components/Common/AlertDialog';
 import './Policies.scss';
 
 function discountBadge(v) {
@@ -42,9 +44,6 @@ function InlineEdit({ value, step, unit, onSave, onCancel }) {
       />
       <span className="inline-edit__unit">{unit}</span>
       <div className="action-buttons">
-        <button className="btn-view" onClick={() => handleView(row)} title="Xem chi tiết">
-                    <FiEye />
-        </button>
         <button className="btn-save" title="Lưu" onClick={() => onSave(val)}><FiSave /></button>
         <button className="btn-cancel-edit" title="Hủy" onClick={onCancel}><FiX /></button>
       </div>
@@ -71,6 +70,17 @@ export default function Policies() {
   const [occasions, setOccasions] = useState([]);
   const [basePrice, setBasePrice] = useState({ don_gia: 1500, tu_ngay: '2024-01-01' });
   const [seatFactors, setSeatFactors] = useState([]);
+
+  // State cho thêm mới chính sách
+  const [showAddModal, setShowAddModal] = useState(null); // 'customer' | 'cancel' | 'occasion' | null
+  const [customerForm, setCustomerForm] = useState({ ten_chinh_sach: '', loai_hanh_khach: 'nguoi_lon', phan_tram_giam: '', tu_ngay: '', den_ngay: '' });
+  const [cancelForm, setCancelForm] = useState({ gio_truoc_gio_chay: '', phi_huy: '' });
+  const [occasionForm, setOccasionForm] = useState({ ten_dip: '', ngay_bat_dau: '', ngay_ket_thuc: '', he_so_tang: '', don_gia_km_goc: 540 });
+  const [alertDialog, setAlertDialog] = useState({ isOpen: false, title: '', message: '', type: 'success' });
+
+  const showAlert = (message, type = 'error', title = type === 'error' ? 'Lỗi' : 'Thành công') => {
+    setAlertDialog({ isOpen: true, title, message, type });
+  };
 
   useEffect(() => {
     loadPolicies();
@@ -105,10 +115,10 @@ export default function Policies() {
     try {
       await policyAPI.updateCustomerDiscount(id, { phan_tram_giam: val });
       setCustomers(prev => prev.map(p => p.id_chinh_sach === id ? { ...p, phan_tram_giam: val } : p));
-      alert('Cập nhật thành công');
+      showAlert('Cập nhật thành công', 'success');
     } catch (error) {
       console.error('Lỗi cập nhật:', error);
-      alert('Cập nhật thất bại');
+      showAlert('Cập nhật thất bại', 'error');
     }
     stopEdit();
   };
@@ -117,10 +127,10 @@ export default function Policies() {
     try {
       await policyAPI.updateCancelFee(id, { phi_huy: val });
       setCancels(prev => prev.map(p => p.id_cs_huy === id ? { ...p, phi_huy: val } : p));
-      alert('Cập nhật thành công');
+      showAlert('Cập nhật thành công', 'success');
     } catch (error) {
       console.error('Lỗi cập nhật:', error);
-      alert('Cập nhật thất bại');
+      showAlert('Cập nhật thất bại', 'error');
     }
     stopEdit();
   };
@@ -129,12 +139,56 @@ export default function Policies() {
     try {
       await policyAPI.updateOccasionPolicy(id, { he_so_tang: val });
       setOccasions(prev => prev.map(p => p.id_bieu_gia === id ? { ...p, he_so_tang: val } : p));
-      alert('Cập nhật thành công');
+      showAlert('Cập nhật thành công', 'success');
     } catch (error) {
       console.error('Lỗi cập nhật:', error);
-      alert('Cập nhật thất bại');
+      showAlert('Cập nhật thất bại', 'error');
     }
     stopEdit();
+  };
+
+  const closeAddModal = () => setShowAddModal(null);
+
+  const createCustomer = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await policyAPI.createCustomerDiscount(customerForm);
+      setCustomers(prev => [...prev, res.data.data]);
+      setCustomerForm({ ten_chinh_sach: '', loai_hanh_khach: 'nguoi_lon', phan_tram_giam: '', tu_ngay: '', den_ngay: '' });
+      closeAddModal();
+      showAlert('Thêm chính sách thành công', 'success');
+    } catch (error) {
+      console.error('Lỗi thêm chính sách:', error);
+      showAlert('Thêm chính sách thất bại', 'error');
+    }
+  };
+
+  const createCancel = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await policyAPI.createCancelFee(cancelForm);
+      setCancels(prev => [...prev, res.data.data]);
+      setCancelForm({ gio_truoc_gio_chay: '', phi_huy: '' });
+      closeAddModal();
+      showAlert('Thêm chính sách thành công', 'success');
+    } catch (error) {
+      console.error('Lỗi thêm chính sách:', error);
+      showAlert('Thêm chính sách thất bại', 'error');
+    }
+  };
+
+  const createOccasion = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await policyAPI.createOccasionPolicy(occasionForm);
+      setOccasions(prev => [...prev, res.data.data]);
+      setOccasionForm({ ten_dip: '', ngay_bat_dau: '', ngay_ket_thuc: '', he_so_tang: '', don_gia_km_goc: 540 });
+      closeAddModal();
+      showAlert('Thêm chính sách thành công', 'success');
+    } catch (error) {
+      console.error('Lỗi thêm chính sách:', error);
+      showAlert('Thêm chính sách thất bại', 'error');
+    }
   };
 
   if (loading) return <LoadingSpinner />;
@@ -160,7 +214,10 @@ export default function Policies() {
       {/* Tab: Loại khách hàng */}
       {activeTab === 'customer' && (
         <div className="pol-section">
-          <p className="pol-section__label">Chiết khấu theo đối tượng khách</p>
+          <div className="pol-section__header">
+            <p className="pol-section__label">Chiết khấu theo đối tượng khách</p>
+            <button className="btn-primary" onClick={() => setShowAddModal('customer')}><FiPlus /> Thêm chính sách</button>
+          </div>
           <table className="pol-table">
             <thead>
               <tr><th>Đối tượng</th><th>Mức giảm</th><th>Phân loại</th><th>Trạng thái</th><th /></tr>
@@ -196,7 +253,10 @@ export default function Policies() {
       {/* Tab: Hủy & hoàn tiền */}
       {activeTab === 'cancel' && (
         <div className="pol-section">
-          <p className="pol-section__label">Phí hủy vé theo thời điểm</p>
+          <div className="pol-section__header">
+            <p className="pol-section__label">Phí hủy vé theo thời điểm</p>
+            <button className="btn-primary" onClick={() => setShowAddModal('cancel')}><FiPlus /> Thêm chính sách</button>
+          </div>
           <table className="pol-table">
             <thead>
               <tr><th>Thời điểm hủy</th><th>Phí hủy</th><th>Khách được hoàn</th><th>Mức độ</th><th /></tr>
@@ -233,7 +293,10 @@ export default function Policies() {
       {/* Tab: Dịp đặc biệt */}
       {activeTab === 'occasion' && (
         <div className="pol-section">
-          <p className="pol-section__label">Hệ số giá theo dịp</p>
+          <div className="pol-section__header">
+            <p className="pol-section__label">Hệ số giá theo dịp</p>
+            <button className="btn-primary" onClick={() => setShowAddModal('occasion')}><FiPlus /> Thêm biểu giá</button>
+          </div>
           <table className="pol-table">
             <thead>
               <tr><th>Dịp</th><th>Hệ số</th><th>Tăng so với ngày thường</th><th>Thời gian áp dụng</th><th /></tr>
@@ -306,6 +369,103 @@ export default function Policies() {
           </table>
         </div>
       )}
+
+      {/* Modal: Thêm chính sách giá theo loại khách hàng */}
+      <Modal isOpen={showAddModal === 'customer'} onClose={closeAddModal} title="Thêm chính sách giá">
+        <form onSubmit={createCustomer}>
+          <div className="form-group">
+            <label>Tên chính sách *</label>
+            <input type="text" value={customerForm.ten_chinh_sach} onChange={e => setCustomerForm({ ...customerForm, ten_chinh_sach: e.target.value })} required />
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Loại hành khách *</label>
+              <select value={customerForm.loai_hanh_khach} onChange={e => setCustomerForm({ ...customerForm, loai_hanh_khach: e.target.value })}>
+                <option value="nguoi_lon">Người lớn</option>
+                <option value="tre_em">Trẻ em</option>
+                <option value="nguoi_cao_tuoi">Người cao tuổi</option>
+                <option value="sinh_vien">Học sinh, sinh viên</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Mức giảm (%) *</label>
+              <input type="number" step="0.01" min="0" max="100" value={customerForm.phan_tram_giam} onChange={e => setCustomerForm({ ...customerForm, phan_tram_giam: e.target.value })} required />
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Áp dụng từ ngày</label>
+              <input type="date" value={customerForm.tu_ngay} onChange={e => setCustomerForm({ ...customerForm, tu_ngay: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label>Đến ngày</label>
+              <input type="date" value={customerForm.den_ngay} onChange={e => setCustomerForm({ ...customerForm, den_ngay: e.target.value })} />
+            </div>
+          </div>
+          <div className="form-actions">
+            <button type="button" className="btn-secondary" onClick={closeAddModal}>Hủy</button>
+            <button type="submit" className="btn-primary">Lưu</button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal: Thêm chính sách hủy vé */}
+      <Modal isOpen={showAddModal === 'cancel'} onClose={closeAddModal} title="Thêm chính sách hủy vé">
+        <form onSubmit={createCancel}>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Trước giờ chạy (giờ) *</label>
+              <input type="number" min="0" value={cancelForm.gio_truoc_gio_chay} onChange={e => setCancelForm({ ...cancelForm, gio_truoc_gio_chay: e.target.value })} required />
+              <small className="hint">VD: 24 nghĩa là từ 24 giờ trở lên trước giờ chạy</small>
+            </div>
+            <div className="form-group">
+              <label>Phí hủy (%) *</label>
+              <input type="number" step="0.01" min="0" max="100" value={cancelForm.phi_huy} onChange={e => setCancelForm({ ...cancelForm, phi_huy: e.target.value })} required />
+            </div>
+          </div>
+          <div className="form-actions">
+            <button type="button" className="btn-secondary" onClick={closeAddModal}>Hủy</button>
+            <button type="submit" className="btn-primary">Lưu</button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal: Thêm biểu giá theo dịp */}
+      <Modal isOpen={showAddModal === 'occasion'} onClose={closeAddModal} title="Thêm biểu giá theo dịp">
+        <form onSubmit={createOccasion}>
+          <div className="form-group">
+            <label>Tên dịp *</label>
+            <input type="text" value={occasionForm.ten_dip} onChange={e => setOccasionForm({ ...occasionForm, ten_dip: e.target.value })} required />
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Từ ngày *</label>
+              <input type="date" value={occasionForm.ngay_bat_dau} onChange={e => setOccasionForm({ ...occasionForm, ngay_bat_dau: e.target.value })} required />
+            </div>
+            <div className="form-group">
+              <label>Đến ngày *</label>
+              <input type="date" value={occasionForm.ngay_ket_thuc} onChange={e => setOccasionForm({ ...occasionForm, ngay_ket_thuc: e.target.value })} required />
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Hệ số tăng giá *</label>
+              <input type="number" step="0.1" min="0" value={occasionForm.he_so_tang} onChange={e => setOccasionForm({ ...occasionForm, he_so_tang: e.target.value })} required />
+              <small className="hint">VD: 1.3 nghĩa là tăng 30% so với giá thường</small>
+            </div>
+            <div className="form-group">
+              <label>Đơn giá/km gốc</label>
+              <input type="number" step="0.01" min="0" value={occasionForm.don_gia_km_goc} onChange={e => setOccasionForm({ ...occasionForm, don_gia_km_goc: e.target.value })} />
+            </div>
+          </div>
+          <div className="form-actions">
+            <button type="button" className="btn-secondary" onClick={closeAddModal}>Hủy</button>
+            <button type="submit" className="btn-primary">Lưu</button>
+          </div>
+        </form>
+      </Modal>
+
+      <AlertDialog isOpen={alertDialog.isOpen} onClose={() => setAlertDialog({ ...alertDialog, isOpen: false })} title={alertDialog.title} message={alertDialog.message} type={alertDialog.type} />
     </div>
   );
 }

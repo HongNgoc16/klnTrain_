@@ -1,5 +1,6 @@
 @import '../../styles/variables';
 
+.admin-app {
 .notifications-page {
   .page-header {
     display: flex;
@@ -236,4 +237,5 @@
       border-top: 1px solid $light;
     }
   }
+}
 }

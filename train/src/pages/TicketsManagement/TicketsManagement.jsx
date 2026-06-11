@@ -3,6 +3,7 @@ import { FiSearch, FiFilter, FiDownload, FiEye, FiCheckCircle, FiXCircle, FiPrin
 import DataTable from '../../components/Common/DataTable';
 import Modal from '../../components/Common/Modal';
 import ConfirmDialog from '../../components/Common/ConfirmDialog';
+import AlertDialog from '../../components/Common/AlertDialog';
 import { ticketAPI } from '../../services/api';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
 import './TicketsManagement.scss';
@@ -16,6 +17,13 @@ const TicketsManagement = () => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [actionType, setActionType] = useState(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [alertDialog, setAlertDialog] = useState({ isOpen: false, title: '', message: '', type: 'success' });
+
+  const showAlert = (message, type = 'error', title = type === 'error' ? 'Lỗi' : type === 'warning' ? 'Lưu ý' : 'Thành công') => {
+    setAlertDialog({ isOpen: true, title, message, type });
+  };
 
   useEffect(() => {
     loadTickets();
@@ -63,9 +71,9 @@ const loadTickets = async () => {
   }
 };
 
-  const handleConfirmTicket = async (ticket) => {
+  const handleConfirmTicket = (ticket) => {
     if (ticket.trang_thai !== 'hieu_luc') {
-      alert('⚠️ Vé không ở trạng thái có hiệu lực để xác nhận');
+      showAlert('Vé không ở trạng thái có hiệu lực để xác nhận', 'warning');
       return;
     }
     setSelectedTicket(ticket);
@@ -75,47 +83,47 @@ const loadTickets = async () => {
 
   const handleCancelTicket = (ticket) => {
     if (ticket.trang_thai !== 'hieu_luc') {
-      alert('⚠️ Không thể hủy vé này');
+      showAlert('Không thể hủy vé này', 'warning');
       return;
     }
     setSelectedTicket(ticket);
-    setActionType('cancel');
-    setShowConfirmDialog(true);
+    setCancelReason('');
+    setShowCancelModal(true);
   };
 
   const processConfirmTicket = async () => {
     try {
       await ticketAPI.confirm(selectedTicket.ma_ve);
-      alert(`✅ Đã xác nhận vé ${selectedTicket.ma_ve} đã được sử dụng`);
+      setShowConfirmDialog(false);
+      showAlert(`Đã xác nhận vé ${selectedTicket.ma_ve} đã được sử dụng`, 'success');
       await loadTickets();
     } catch (error) {
       console.error('Lỗi xác nhận vé:', error);
-      alert('❌ Có lỗi xảy ra khi xác nhận vé');
-    } finally {
       setShowConfirmDialog(false);
+      showAlert('Có lỗi xảy ra khi xác nhận vé', 'error');
+    } finally {
       setSelectedTicket(null);
       setActionType(null);
     }
   };
 
   const processCancelTicket = async () => {
-    const lyDo = prompt('Nhập lý do hủy vé:');
-    if (!lyDo) {
-      setShowConfirmDialog(false);
+    if (!cancelReason.trim()) {
+      showAlert('Vui lòng nhập lý do hủy vé', 'warning');
       return;
     }
-    
+
     try {
-      await ticketAPI.cancel(selectedTicket.ma_ve, { ly_do: lyDo });
-      alert(`❌ Đã hủy vé ${selectedTicket.ma_ve}`);
+      await ticketAPI.cancel(selectedTicket.ma_ve, { ly_do: cancelReason });
+      setShowCancelModal(false);
+      showAlert(`Đã hủy vé ${selectedTicket.ma_ve}`, 'success');
       await loadTickets();
     } catch (error) {
       console.error('Lỗi hủy vé:', error);
-      alert('❌ Có lỗi xảy ra khi hủy vé');
+      setShowCancelModal(false);
+      showAlert('Có lỗi xảy ra khi hủy vé', 'error');
     } finally {
-      setShowConfirmDialog(false);
       setSelectedTicket(null);
-      setActionType(null);
     }
   };
 
@@ -425,7 +433,7 @@ const loadTickets = async () => {
         <div>
           <h1 className="page-title">Quản lý vé</h1>
         </div>
-        <button className="btn-primary" onClick={() => window.location.href = '/reports'}>
+        <button className="btn-primary" onClick={() => window.location.href = '/admin/reports'}>
           <FiDownload /> Xuất báo cáo
         </button>
       </div>
@@ -449,7 +457,24 @@ const loadTickets = async () => {
 
       <DataTable columns={columns} data={filteredTickets} />
 
-      <ConfirmDialog isOpen={showConfirmDialog} onClose={() => setShowConfirmDialog(false)} onConfirm={actionType === 'confirm' ? processConfirmTicket : processCancelTicket} title={actionType === 'confirm' ? 'Xác nhận vé' : 'Hủy vé'} message={actionType === 'confirm' ? `Xác nhận vé ${selectedTicket?.ma_ve} đã được sử dụng?` : `Bạn có chắc chắn muốn hủy vé ${selectedTicket?.ma_ve}?`} confirmText={actionType === 'confirm' ? 'Xác nhận' : 'Hủy vé'} cancelText="Quay lại" />
+      <ConfirmDialog isOpen={showConfirmDialog} onClose={() => setShowConfirmDialog(false)} onConfirm={processConfirmTicket} title="Xác nhận vé" message={`Xác nhận vé ${selectedTicket?.ma_ve} đã được sử dụng?`} confirmText="Xác nhận" cancelText="Quay lại" />
+
+      {/* Cancel Ticket Modal - nhập lý do hủy */}
+      <Modal isOpen={showCancelModal} onClose={() => setShowCancelModal(false)} title="Hủy vé" size="sm">
+        <div className="cancel-ticket-form">
+          <p>Bạn có chắc chắn muốn hủy vé <strong>{selectedTicket?.ma_ve}</strong>?</p>
+          <div className="form-group">
+            <label>Lý do hủy vé *</label>
+            <textarea rows="3" value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} placeholder="Nhập lý do hủy vé..." />
+          </div>
+          <div className="form-actions">
+            <button type="button" className="btn-secondary" onClick={() => setShowCancelModal(false)}>Đóng</button>
+            <button type="button" className="btn-danger" onClick={processCancelTicket}>Xác nhận hủy</button>
+          </div>
+        </div>
+      </Modal>
+
+      <AlertDialog isOpen={alertDialog.isOpen} onClose={() => setAlertDialog({ ...alertDialog, isOpen: false })} title={alertDialog.title} message={alertDialog.message} type={alertDialog.type} />
 
       <Modal isOpen={showDetailModal} onClose={() => setShowDetailModal(false)} title="Chi tiết vé" size="md">
         {selectedTicket && (

@@ -1,5 +1,12 @@
 @import '../../styles/variables';
 
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.admin-app {
 .loading-spinner {
   display: flex;
   flex-direction: column;
@@ -35,9 +42,4 @@
     font-size: 14px;
   }
 }
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }

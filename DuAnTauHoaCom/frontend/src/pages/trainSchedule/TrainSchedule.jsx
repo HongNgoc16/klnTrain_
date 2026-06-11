@@ -7,12 +7,22 @@ import TrainDetail from './trainDetail/TrainDetail'
 import { searchTrains as searchTrainsApi, getTrainDetail as getTrainDetailApi } from '../../api/trains'
 import background from '../../assets/background.jpg'
 
-const toHHMM = (t) => (t || '').slice(0, 5)
+// TIME từ Sequelize có thể là Date epoch "1970-01-01T08:00:00.000Z" hoặc string "08:00:00"
+const toHHMM = (t) => {
+  if (!t) return ''
+  const s = String(t)
+  // ISO datetime có T: lấy HH:MM từ phần sau T
+  const iso = s.match(/T(\d{2}):(\d{2})/)
+  if (iso) return `${iso[1]}:${iso[2]}`
+  // Plain time "HH:MM..." hoặc "HH:MM:SS..."
+  if (/^\d{2}:\d{2}/.test(s)) return s.slice(0, 5)
+  return ''
+}
 
 const computeDuration = (start, end) => {
   if (!start || !end) return ''
-  const [h1, m1] = start.split(':').map(Number)
-  const [h2, m2] = end.split(':').map(Number)
+  const [h1, m1] = toHHMM(start).split(':').map(Number)
+  const [h2, m2] = toHHMM(end).split(':').map(Number)
   let mins = h2 * 60 + m2 - (h1 * 60 + m1)
   if (mins < 0) mins += 24 * 60
   const h = Math.floor(mins / 60)

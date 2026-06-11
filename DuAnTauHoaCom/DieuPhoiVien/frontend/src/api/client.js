@@ -17,7 +17,7 @@ api.interceptors.response.use(
   err => {
     if (err.response?.status === 401) {
       localStorage.removeItem('KLN_DP_AUTH')
-      if (window.location.pathname !== '/dang-nhap') window.location.href = '/dang-nhap'
+      if (window.location.pathname !== '/dispatcher/dang-nhap') window.location.href = '/dispatcher/dang-nhap'
     }
     throw new Error(err.response?.data?.message || err.message || 'Lỗi không xác định')
   }

@@ -1,5 +1,6 @@
 @import '../../styles/variables';
 
+.admin-app {
 .customers-management {
   .page-header { margin-bottom: 24px; }
   .page-title { font-size: 24px; color: $dark; margin-bottom: 4px; }
@@ -61,4 +62,5 @@
 
   .btn-primary { background: $primary; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
   .btn-secondary { background: $gray; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+}
 }

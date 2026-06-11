@@ -1,5 +1,11 @@
 @import '../../styles/variables';
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.admin-app {
 .admin-layout {
   display: flex;
   min-height: 100vh;
@@ -40,8 +46,4 @@
     animation: fadeIn 0.3s ease;
   }
 }
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
 }

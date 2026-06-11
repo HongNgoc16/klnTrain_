@@ -25,7 +25,14 @@ router.get('/loai-toa',   C.getLoaiToaList)
 router.get('/lich-chay',      C.getLichChayList)
 router.post('/lich-chay',     C.createLichChay)
 router.put('/lich-chay/:id',  C.updateLichChay)
+router.delete('/lich-chay/:id', C.deleteLichChay)
 router.post('/sinh-chuyen',   C.sinhChuyenTau)
+
+// ─── Ga dừng (chi tiết lịch trình) ────────────────────────────────
+router.get('/lich-chay/:id/ga-dung',  C.getGaDungList)
+router.post('/lich-chay/:id/ga-dung', C.addGaDung)
+router.put('/ga-dung/:id',            C.updateGaDung)
+router.delete('/ga-dung/:id',         C.removeGaDung)
 
 // ─── Chuyến tàu ──────────────────────────────────────────────────
 router.get('/chuyen-tau',                    C.getChuyenTauList)

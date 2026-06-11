@@ -1,3 +1,15 @@
+@keyframes slideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.admin-app {
 // train/src/components/Common/ConfirmDialog.scss
 .confirm-overlay {
   position: fixed;
@@ -31,11 +43,26 @@
   
   .confirm-body {
     padding: 20px;
-    
+
     p {
       margin: 0;
       line-height: 1.5;
     }
+
+    &--alert {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+  }
+
+  .alert-icon {
+    flex-shrink: 0;
+    font-size: 28px;
+
+    &--success { color: #27ae60; }
+    &--error { color: #e74c3c; }
+    &--warning { color: #f39c12; }
   }
   
   .confirm-footer {
@@ -46,14 +73,4 @@
     border-top: 1px solid #eee;
   }
 }
-
-@keyframes slideIn {
-  from {
-    transform: translateY(-50px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
 }

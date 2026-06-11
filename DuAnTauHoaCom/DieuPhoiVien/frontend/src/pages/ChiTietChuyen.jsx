@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { FiClock, FiXCircle, FiTool, FiInfo, FiAlertTriangle, FiPlus, FiEdit2, FiTrash2, FiCheckCircle, FiLoader, FiBox, FiBell, FiClipboard } from 'react-icons/fi'
+import { FaTrain, FaTicketAlt } from 'react-icons/fa'
 import {
   getChuyenDetail, logSuKien,
   addToa, updateToa, removeToa,
-  getLoaiToaList, getGaList,
+  getLoaiToaList,
 } from '../api/dieuphoi'
 import StatusBadge from '../components/StatusBadge'
 
@@ -25,10 +27,10 @@ const fmtDate = (d) => {
 }
 
 const SU_KIEN = [
-  { v: 'delay',       l: '⏰ Chậm giờ'        },
-  { v: 'cancel',      l: '❌ Hủy chuyến'       },
-  { v: 'maintenance', l: '🔧 Bảo trì kỹ thuật' },
-  { v: 'info',        l: 'ℹ️ Thông báo chung'   },
+  { v: 'delay',       l: 'Chậm giờ',          icon: FiClock     },
+  { v: 'cancel',      l: 'Hủy chuyến',        icon: FiXCircle   },
+  { v: 'maintenance', l: 'Bảo trì kỹ thuật',  icon: FiTool      },
+  { v: 'info',        l: 'Thông báo chung',   icon: FiInfo      },
 ]
 const Modal = ({ title, onClose, children, footer }) => (
   <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
@@ -49,7 +51,13 @@ const FormField = ({ label, children }) => (
   </div>
 )
 
-const inputCls = "w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-blue-400 outline-none"
+const inputCls = "w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-[#8C1D19] outline-none"
+
+const seatColor = (avail, total) => {
+  if (avail <= 0) return 'text-red-500'
+  if (total > 0 && avail / total < 0.3) return 'text-orange-500'
+  return 'text-green-600'
+}
 
 export default function ChiTietChuyen() {
   const { id } = useParams()
@@ -57,7 +65,6 @@ export default function ChiTietChuyen() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [loaiToaList, setLoaiToaList] = useState([])
-  const [gaList, setGaList] = useState([])
   const [tab, setTab] = useState('toa')
   const [msg, setMsg] = useState({ text: '', type: '' })
 
@@ -76,7 +83,6 @@ export default function ChiTietChuyen() {
   useEffect(() => { load() }, [id])
   useEffect(() => {
     getLoaiToaList().then(r => { const d = r.data || r; setLoaiToaList(Array.isArray(d) ? d : []) }).catch(() => {})
-    getGaList().then(r => { const d = r.data || r; setGaList(Array.isArray(d) ? d : []) }).catch(() => {})
   }, [])
 
   const showMsg = (text, type = 'success') => { setMsg({ text, type }); setTimeout(() => setMsg({ text: '', type: '' }), 4000) }
@@ -92,10 +98,10 @@ export default function ChiTietChuyen() {
     finally { setSaving(false) }
   }
 
-  const doEvent  = () => wrap(() => logSuKien(id, { loaiSuKien: eventForm.loaiSuKien, moTa: eventForm.moTa, delayPhut: eventForm.delayPhut || undefined, idGaAnhHuong: eventForm.idGaAnhHuong || undefined }), '✅ Ghi nhận sự kiện thành công')
-  const doAddToa = () => wrap(() => addToa(id, { soToaThuTu: parseInt(toaForm.soToaThuTu), idLoaiToa: parseInt(toaForm.idLoaiToa), soGheToidDa: toaForm.soGheToidDa ? parseInt(toaForm.soGheToidDa) : undefined }), '✅ Thêm toa thành công')
-  const doEditToa= () => wrap(() => updateToa(editingToa.idToaChuyen, { soToaThuTu: parseInt(toaForm.soToaThuTu), idLoaiToa: parseInt(toaForm.idLoaiToa), soGheToidDa: toaForm.soGheToidDa ? parseInt(toaForm.soGheToidDa) : undefined, idChuyen: id }), '✅ Cập nhật toa thành công')
-  const doRemove = (t) => { if (!window.confirm(`Xóa toa ${t.soToaThuTu}?`)) return; wrap(() => removeToa(t.idToaChuyen), '✅ Xóa toa thành công') }
+  const doEvent  = () => wrap(() => logSuKien(id, { loaiSuKien: eventForm.loaiSuKien, moTa: eventForm.moTa, delayPhut: eventForm.delayPhut || undefined, idGaAnhHuong: eventForm.idGaAnhHuong || undefined }), 'Ghi nhận sự kiện thành công')
+  const doAddToa = () => wrap(() => addToa(id, { soToaThuTu: parseInt(toaForm.soToaThuTu), idLoaiToa: parseInt(toaForm.idLoaiToa), soGheToidDa: toaForm.soGheToidDa ? parseInt(toaForm.soGheToidDa) : undefined }), 'Thêm toa thành công')
+  const doEditToa= () => wrap(() => updateToa(editingToa.idToaChuyen, { soToaThuTu: parseInt(toaForm.soToaThuTu), idLoaiToa: parseInt(toaForm.idLoaiToa), soGheToidDa: toaForm.soGheToidDa ? parseInt(toaForm.soGheToidDa) : undefined, idChuyen: id }), 'Cập nhật toa thành công')
+  const doRemove = (t) => { if (!window.confirm(`Xóa toa ${t.soToaThuTu}?`)) return; wrap(() => removeToa(t.idToaChuyen), 'Xóa toa thành công') }
 
   const openAddToa  = () => { setToaForm({ soToaThuTu: String((data?.toaList?.length || 0) + 1), idLoaiToa: '', soGheToidDa: '' }); setModal('addToa') }
   const openEditToa = (t) => { setEditingToa(t); setToaForm({ soToaThuTu: String(t.soToaThuTu), idLoaiToa: String(t.idLoaiToa), soGheToidDa: String(t.soGheToidDa || '') }); setModal('editToa') }
@@ -114,15 +120,15 @@ export default function ChiTietChuyen() {
       {/* Breadcrumb + Header */}
       <div>
         <div className="flex items-center gap-2 text-sm text-gray-400 mb-3">
-          <button onClick={() => navigate('/chuyen-tau')} className="hover:text-blue-600">Quản lý Chuyến</button>
+          <button onClick={() => navigate('/dispatcher/chuyen-tau')} className="hover:text-[#8C1D19]">Quản lý Chuyến</button>
           <span>/</span>
           <span className="text-gray-700 font-medium">Chi tiết chuyến #{id}</span>
         </div>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-gray-800">
-                🚂 {lc?.Tau?.so_hieu} — {fmtDate(data.ngayChay)}
+              <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                <FaTrain className="text-[#8C1D19]" /> {lc?.Tau?.so_hieu} — {fmtDate(data.ngayChay)}
               </h1>
               <StatusBadge status={data.trangThai} className="text-sm" />
             </div>
@@ -135,7 +141,7 @@ export default function ChiTietChuyen() {
           </div>
           <div className="flex gap-2 flex-wrap">
             <button onClick={openEvent} className="flex items-center gap-1.5 bg-orange-500 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-orange-600">
-              📋 Ghi sự kiện
+              <FiClipboard /> Ghi sự kiện
             </button>
           </div>
         </div>
@@ -143,7 +149,8 @@ export default function ChiTietChuyen() {
 
       {/* Thông báo */}
       {msg.text && (
-        <div className={`rounded-xl px-4 py-3 text-sm font-medium ${msg.type === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'}`}>
+        <div className={`rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2 ${msg.type === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'}`}>
+          {msg.type === 'error' ? <FiXCircle className="shrink-0" /> : <FiCheckCircle className="shrink-0" />}
           {msg.text}
         </div>
       )}
@@ -151,12 +158,12 @@ export default function ChiTietChuyen() {
       {/* Thống kê nhanh */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { l: 'Số toa', v: data.toaList?.length || 0, icon: '🚃' },
-          { l: 'Tổng vé bán', v: data.tongVeBan || 0, icon: '🎫' },
-          { l: 'Sự kiện', v: data.events?.length || 0, icon: '📋' },
+          { l: 'Số toa', v: data.toaList?.length || 0, icon: FiBox },
+          { l: 'Tổng vé bán', v: data.tongVeBan || 0, icon: FaTicketAlt },
+          { l: 'Sự kiện', v: data.events?.length || 0, icon: FiBell },
         ].map(s => (
           <div key={s.l} className="bg-white rounded-2xl p-4 shadow-sm text-center">
-            <span className="text-2xl">{s.icon}</span>
+            <s.icon className="text-2xl mx-auto text-[#8C1D19]" />
             <p className="text-2xl font-bold text-gray-800 mt-1">{s.v}</p>
             <p className="text-xs text-gray-400 mt-0.5">{s.l}</p>
           </div>
@@ -166,10 +173,10 @@ export default function ChiTietChuyen() {
       {/* Tabs */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
         <div className="flex border-b border-gray-100">
-          {[['toa','🚃 Quản lý Toa'],['su-kien','📋 Lịch sử sự kiện']].map(([t, l]) => (
+          {[['toa', FiBox, 'Quản lý Toa'],['su-kien', FiBell, 'Lịch sử sự kiện']].map(([t, Icon, l]) => (
             <button key={t} onClick={() => setTab(t)}
-              className={`px-6 py-3.5 text-sm font-semibold transition-colors border-b-2 ${tab===t ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-              {l}
+              className={`px-6 py-3.5 text-sm font-semibold transition-colors border-b-2 flex items-center gap-2 ${tab===t ? 'border-[#8C1D19] text-[#8C1D19]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+              <Icon /> {l}
             </button>
           ))}
         </div>
@@ -178,43 +185,58 @@ export default function ChiTietChuyen() {
         {tab === 'toa' && (
           <div className="p-5">
             {toaReadOnly ? (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800 mb-4">
-                ⚠️ {(data.tongVeBan || 0) > 0
-                  ? `Chuyến đã có ${data.tongVeBan} vé đặt — không thể điều chỉnh cấu hình toa.`
-                  : 'Chuyến đã kết thúc — không thể điều chỉnh cấu hình toa.'}
-                {' '}Việc điều chỉnh toa chỉ được phép ngay sau khi sinh chuyến (trước khi có vé đặt).
+              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800 mb-4 flex items-start gap-2">
+                <FiAlertTriangle className="shrink-0 mt-0.5" />
+                <span>
+                  {(data.tongVeBan || 0) > 0
+                    ? `Chuyến đã có ${data.tongVeBan} vé đặt — không thể điều chỉnh cấu hình toa.`
+                    : 'Chuyến đã kết thúc — không thể điều chỉnh cấu hình toa.'}
+                  {' '}Việc điều chỉnh toa chỉ được phép ngay sau khi sinh chuyến (trước khi có vé đặt).
+                </span>
               </div>
             ) : (
               <div className="flex justify-between items-center mb-4">
-                <p className="text-sm text-gray-500">Sắp xếp thứ tự toa bằng nút ↑. Xóa chỉ khi chưa có vé đặt.</p>
+                <p className="text-sm text-gray-500">Mỗi thẻ là một toa trong chuyến. Xóa chỉ khi chưa có vé đặt.</p>
                 <button onClick={openAddToa} className="flex items-center gap-1.5 bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-green-700">
-                  + Thêm toa
+                  <FiPlus /> Thêm toa
                 </button>
               </div>
             )}
-            <div className="space-y-2">
-              {(data.toaList || []).length === 0 && <p className="text-gray-400 text-sm text-center py-6">Chưa có toa nào</p>}
-              {(data.toaList || []).map((t, i) => (
-                <div key={t.idToaChuyen} className="flex items-center gap-4 bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
-                  <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold shrink-0">
-                    {t.soToaThuTu}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {(data.toaList || []).map(t => {
+                const total = t.soGheToidDa || t.loaiToa?.so_cho_toi_da || 0
+                const avail = total - (t.vesBan || 0)
+                return (
+                  <div key={t.idToaChuyen} className="bg-gray-50 rounded-2xl border border-gray-100 p-5 text-center space-y-1.5">
+                    <p className="text-3xl font-extrabold text-[#8C1D19]">{String(t.soToaThuTu).padStart(2, '0')}</p>
+                    <p className="text-sm font-semibold text-gray-700 truncate">{t.loaiToa?.ten_loai_toa}</p>
+                    <p className={`text-sm font-bold ${seatColor(avail, total)}`}>{avail} / {total} ghế trống</p>
+                    <p className="text-xs text-gray-400">Đã bán: {t.vesBan || 0}</p>
+                    {!toaReadOnly && (
+                      <div className="flex gap-2 justify-center pt-2">
+                        <button onClick={() => openEditToa(t)} className="flex items-center gap-1 px-2.5 py-1.5 bg-[#8C1D19]/10 text-[#8C1D19] rounded-lg text-xs font-medium hover:bg-[#8C1D19]/20">
+                          <FiEdit2 /> Sửa
+                        </button>
+                        <button onClick={() => doRemove(t)} disabled={t.vesBan > 0}
+                          className="flex items-center gap-1 px-2.5 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-medium hover:bg-red-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                          title={t.vesBan > 0 ? `Không xóa được vì đã có ${t.vesBan} vé` : 'Xóa toa'}>
+                          <FiTrash2 /> Xóa
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-800">{t.loaiToa?.ten_loai_toa}</p>
-                    <p className="text-xs text-gray-400">{t.soGheToidDa || t.loaiToa?.so_cho_toi_da} chỗ · Đã bán: {t.vesBan}</p>
-                  </div>
-                  {!toaReadOnly && (
-                    <div className="flex gap-1.5 shrink-0">
-                      <button onClick={() => openEditToa(t)} className="px-2.5 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-100">Sửa</button>
-                      <button onClick={() => doRemove(t)} disabled={t.vesBan > 0}
-                        className="px-2.5 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-medium hover:bg-red-100 disabled:opacity-30 disabled:cursor-not-allowed"
-                        title={t.vesBan > 0 ? `Không xóa được vì đã có ${t.vesBan} vé` : 'Xóa toa'}>
-                        Xóa
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
+                )
+              })}
+              {!toaReadOnly && (
+                <button onClick={openAddToa}
+                  className="border-2 border-dashed border-gray-300 rounded-2xl p-5 flex flex-col items-center justify-center gap-2 min-h-[160px] text-gray-400 hover:border-[#8C1D19] hover:text-[#8C1D19] transition-colors">
+                  <FiPlus className="text-2xl" />
+                  <span className="text-sm font-semibold">Thêm toa mới</span>
+                </button>
+              )}
+              {(data.toaList || []).length === 0 && toaReadOnly && (
+                <p className="col-span-full text-gray-400 text-sm text-center py-6">Chưa có toa nào</p>
+              )}
             </div>
           </div>
         )}
@@ -227,8 +249,11 @@ export default function ChiTietChuyen() {
               <div key={e.id} className="flex gap-4 bg-gray-50 rounded-xl px-4 py-3.5 border-l-4 border-orange-400">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-gray-800 text-sm">
-                      {SU_KIEN.find(s => s.v === e.loaiSuKien)?.l || e.loaiSuKien}
+                    <span className="font-semibold text-gray-800 text-sm flex items-center gap-1.5">
+                      {(() => {
+                        const sk = SU_KIEN.find(s => s.v === e.loaiSuKien)
+                        return sk ? <><sk.icon /> {sk.l}</> : e.loaiSuKien
+                      })()}
                     </span>
                     {e.delayPhut && <span className="text-xs text-orange-600 font-bold bg-orange-100 px-1.5 py-0.5 rounded-full">+{e.delayPhut} phút</span>}
                     {e.gaAnhHuong && <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">@ {e.gaAnhHuong}</span>}
@@ -248,11 +273,11 @@ export default function ChiTietChuyen() {
       {/* ─── MODALS ─── */}
 
       {modal === 'event' && (
-        <Modal title="📋 Ghi nhận sự kiện điều phối" onClose={() => setModal(null)}
+        <Modal title={<span className="flex items-center gap-2"><FiClipboard /> Ghi nhận sự kiện điều phối</span>} onClose={() => setModal(null)}
           footer={<>
             <button onClick={doEvent} disabled={saving}
-              className="flex-1 bg-orange-500 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-orange-600 disabled:opacity-50">
-              {saving ? '⏳...' : 'Ghi nhận'}
+              className="flex-1 bg-orange-500 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-orange-600 disabled:opacity-50 flex items-center justify-center gap-2">
+              {saving ? <FiLoader className="animate-spin" /> : 'Ghi nhận'}
             </button>
             <button onClick={() => setModal(null)} className="flex-1 border-2 border-gray-200 rounded-xl py-2.5 text-sm font-medium">Hủy</button>
           </>}>
@@ -270,8 +295,11 @@ export default function ChiTietChuyen() {
           <FormField label="Ga ảnh hưởng (tùy chọn)">
             <select value={eventForm.idGaAnhHuong} onChange={e => setEventForm(p => ({...p, idGaAnhHuong: e.target.value}))} className={inputCls}>
               <option value="">-- Không chọn --</option>
-              {gaList.map(g => <option key={g.id_ga} value={g.id_ga}>{g.ten_ga}</option>)}
+              {(data.lichTrinh || []).map(g => <option key={g.idGa} value={g.idGa}>{g.tenGa}</option>)}
             </select>
+            {eventForm.loaiSuKien === 'delay' && (
+              <p className="text-xs text-gray-400 mt-1">Chọn ga để tự động cập nhật giờ đến/đi dự kiến của ga này và các ga sau theo số phút chậm.</p>
+            )}
           </FormField>
           <FormField label="Mô tả chi tiết">
             <textarea value={eventForm.moTa} onChange={e => setEventForm(p => ({...p, moTa: e.target.value}))}
@@ -281,20 +309,22 @@ export default function ChiTietChuyen() {
       )}
 
       {(modal === 'addToa' || modal === 'editToa') && (
-        <Modal title={modal === 'addToa' ? '➕ Thêm toa vào chuyến' : '✏️ Chỉnh sửa toa'} onClose={() => setModal(null)}
+        <Modal title={modal === 'addToa'
+            ? <span className="flex items-center gap-2"><FiPlus /> Thêm toa vào chuyến</span>
+            : <span className="flex items-center gap-2"><FiEdit2 /> Chỉnh sửa toa</span>} onClose={() => setModal(null)}
           footer={<>
             <button onClick={modal === 'addToa' ? doAddToa : doEditToa}
               disabled={!toaForm.soToaThuTu || !toaForm.idLoaiToa || saving}
-              className="flex-1 bg-green-600 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-green-700 disabled:opacity-50">
-              {saving ? '⏳...' : modal === 'addToa' ? '+ Thêm toa' : 'Lưu thay đổi'}
+              className="flex-1 bg-green-600 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2">
+              {saving ? <FiLoader className="animate-spin" /> : modal === 'addToa' ? <><FiPlus /> Thêm toa</> : 'Lưu thay đổi'}
             </button>
             <button onClick={() => setModal(null)} className="flex-1 border-2 border-gray-200 rounded-xl py-2.5 text-sm font-medium">Hủy</button>
           </>}>
           <FormField label="Số thứ tự toa">
             <input type="number" min={1} value={toaForm.soToaThuTu} onChange={e => setToaForm(p => ({...p, soToaThuTu: e.target.value}))} className={inputCls} />
             {modal === 'editToa' && toaForm.soToaThuTu && parseInt(toaForm.soToaThuTu) !== editingToa?.soToaThuTu && (
-              <p className="text-xs text-blue-600 mt-1">
-                💡 Nếu số thứ tự này đã có toa khác, 2 toa sẽ tự động hoán đổi vị trí.
+              <p className="text-xs text-[#8C1D19] mt-1 flex items-center gap-1.5">
+                <FiInfo className="shrink-0" /> Nếu số thứ tự này đã có toa khác, 2 toa sẽ tự động hoán đổi vị trí.
               </p>
             )}
           </FormField>

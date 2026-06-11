@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { FiPlus, FiEdit, FiTrash2, FiEye, FiSearch } from 'react-icons/fi';
 import DataTable from '../../components/Common/DataTable';
 import Modal from '../../components/Common/Modal';
+import ConfirmDialog from '../../components/Common/ConfirmDialog';
+import AlertDialog from '../../components/Common/AlertDialog';
 import { stationAPI } from '../../services/api';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
 import './StationsManagement.scss';
@@ -12,7 +14,14 @@ const StationsManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [selectedStation, setSelectedStation] = useState(null);
+  const [alertDialog, setAlertDialog] = useState({ isOpen: false, title: '', message: '', type: 'success' });
+
+  const showAlert = (message, type = 'success', title = type === 'error' ? 'Lỗi' : 'Thành công') => {
+    setAlertDialog({ isOpen: true, title, message, type });
+  };
   const [formData, setFormData] = useState({
     ma_ga_viet_tat: '',
     ten_ga: '',
@@ -59,17 +68,17 @@ const StationsManagement = () => {
     try {
       if (selectedStation) {
         await stationAPI.update(selectedStation.ma_ga, formData);
-        alert('Cập nhật ga thành công!');
+        showAlert('Cập nhật ga thành công!', 'success');
       } else {
         await stationAPI.create(formData);
-        alert('Thêm ga thành công!');
+        showAlert('Thêm ga thành công!', 'success');
       }
       await loadStations();
       setShowModal(false);
       resetForm();
     } catch (error) {
       console.error('Lỗi lưu:', error);
-      alert('Có lỗi xảy ra!');
+      showAlert('Có lỗi xảy ra!', 'error');
     }
   };
 
@@ -96,15 +105,21 @@ const StationsManagement = () => {
     setShowDetailModal(true);
   };
 
-  const handleDelete = async (station) => {
-    if (window.confirm(`Xóa ga ${station.ten_ga}?`)) {
-      try {
-        await stationAPI.delete(station.ma_ga);
-        alert('Xóa ga thành công!');
-        await loadStations();
-      } catch (error) {
-        alert('Không thể xóa ga này!');
-      }
+  const handleDelete = (station) => {
+    setDeleteTarget(station);
+    setShowConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await stationAPI.delete(deleteTarget.ma_ga);
+      setShowConfirm(false);
+      setDeleteTarget(null);
+      showAlert('Xóa ga thành công!', 'success');
+      await loadStations();
+    } catch (error) {
+      setShowConfirm(false);
+      showAlert('Không thể xóa ga này!', 'error');
     }
   };
 
@@ -228,6 +243,18 @@ const StationsManagement = () => {
           </div>
         )}
       </Modal>
+
+      <ConfirmDialog
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={confirmDelete}
+        title="Xóa ga"
+        message={`Xóa ga ${deleteTarget?.ten_ga}?`}
+        confirmText="Xóa"
+        cancelText="Hủy"
+      />
+
+      <AlertDialog isOpen={alertDialog.isOpen} onClose={() => setAlertDialog({ ...alertDialog, isOpen: false })} title={alertDialog.title} message={alertDialog.message} type={alertDialog.type} />
     </div>
   );
 };

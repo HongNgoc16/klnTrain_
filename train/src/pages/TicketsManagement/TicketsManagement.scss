@@ -1,5 +1,7 @@
 @import '../../styles/variables';
 @import '../../styles/global.scss';
+
+.admin-app {
 .tickets-management {
   .page-header {
     display: flex;
@@ -408,6 +410,75 @@
     }
   }
   
+  // Cancel ticket reason form
+  .cancel-ticket-form {
+    .form-group {
+      margin: 16px 0;
+
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 500;
+        color: $dark;
+      }
+
+      textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid $light;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: inherit;
+        resize: vertical;
+
+        &:focus {
+          outline: none;
+          border-color: $primary;
+        }
+      }
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 8px;
+      padding-top: 16px;
+      border-top: 1px solid $light;
+    }
+
+    .btn-secondary {
+      background: $gray;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s;
+
+      &:hover {
+        background: darken($gray, 10%);
+      }
+    }
+
+    .btn-danger {
+      background: $danger;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+
+      &:hover {
+        background: darken($danger, 10%);
+      }
+    }
+  }
+
   // Data table override
   .data-table-container {
     .status-badge {
@@ -469,4 +540,5 @@
       }
     }
   }
+}
 }

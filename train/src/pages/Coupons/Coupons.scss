@@ -1,5 +1,6 @@
 @use '../../styles/variables' as *;
 
+.admin-app {
 .coupons-page {
   .page-header {
     display: flex;
@@ -171,3 +172,4 @@
       }
     }
   }
+}

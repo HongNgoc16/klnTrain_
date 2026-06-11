@@ -15,12 +15,7 @@ const Hero = () => {
       {/* Content */}
       <RootLayout className="absolute top-0 left-0 z-10 flex h-full w-full flex-col items-start justify-center gap-5 py-12">
 
-        {/* Tagline chip */}
-        <div className="hidden sm:flex items-center gap-2 rounded-full bg-[#8C1D19]/10 px-4 py-1.5 backdrop-blur-sm border border-[#8C1D19]/20">
-          <span className="h-2 w-2 rounded-full bg-[#8C1D19] animate-pulse" />
-          <span className="text-sm font-medium text-[#8C1D19]/80">Hệ thống đặt vé tàu trực tuyến</span>
-        </div>
-
+       
         {/* Heading */}
         <div className="animate-slide-up">
           <h1 className="text-3xl font-extrabold leading-tight text-[#8C1D19] drop-shadow sm:text-4xl md:text-5xl">
@@ -28,7 +23,7 @@ const Hero = () => {
             <span className="text-[#d4a017]">bắt đầu từ đây</span>
           </h1>
           <p className="mt-2 text-sm text-[#8C1D19]/70 sm:text-base">
-            Đặt vé tàu nhanh chóng — Nhiều tuyến đường trên khắp Việt Nam
+            Vé tàu thông minh - Hành trình thuận lợi
           </p>
         </div>
 

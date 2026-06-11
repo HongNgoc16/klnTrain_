@@ -3,6 +3,7 @@ import { FiSearch, FiEye, FiCheckCircle, FiXCircle, FiClock } from 'react-icons/
 import DataTable from '../../components/Common/DataTable';
 import Modal from '../../components/Common/Modal';
 import ConfirmDialog from '../../components/Common/ConfirmDialog';
+import AlertDialog from '../../components/Common/AlertDialog';
 import { refundAPI } from '../../services/api';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
 import './Refunds.scss';
@@ -16,6 +17,11 @@ const Refunds = () => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [selectedRefund, setSelectedRefund] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [alertDialog, setAlertDialog] = useState({ isOpen: false, title: '', message: '', type: 'success' });
+
+  const showAlert = (message, type = 'error', title = type === 'error' ? 'Lỗi' : type === 'warning' ? 'Lưu ý' : 'Thành công') => {
+    setAlertDialog({ isOpen: true, title, message, type });
+  };
 
   useEffect(() => {
     loadRefunds();
@@ -42,7 +48,7 @@ const Refunds = () => {
         phi_huy: refund.phi_huy,
         tien_hoan: refund.tien_hoan,
         ly_do: refund.ly_do,
-        trang_thai: refund.trang_thai_hoan || refund.trang_thai,
+        trang_thai: refund.trang_thai_hoan === 'dang_xu_ly' ? 'cho_xu_ly' : (refund.trang_thai_hoan || refund.trang_thai),
         thoi_gian_hoan: refund.thoi_gian_hoan
       }));
       
@@ -60,7 +66,7 @@ const Refunds = () => {
 
   const handleConfirmRefund = (refund) => {
     if (refund.trang_thai !== 'pending' && refund.trang_thai !== 'cho_xu_ly') {
-      alert('⚠️ Yêu cầu này không thể xác nhận');
+      showAlert('Yêu cầu này không thể xác nhận', 'warning');
       return;
     }
     setSelectedRefund(refund);
@@ -70,7 +76,7 @@ const Refunds = () => {
 
   const handleRejectRefund = (refund) => {
     if (refund.trang_thai !== 'pending' && refund.trang_thai !== 'cho_xu_ly') {
-      alert('⚠️ Yêu cầu này không thể từ chối');
+      showAlert('Yêu cầu này không thể từ chối', 'warning');
       return;
     }
     setSelectedRefund(refund);
@@ -81,13 +87,14 @@ const Refunds = () => {
   const processConfirm = async () => {
     try {
       await refundAPI.confirm(selectedRefund.id);
-      alert(`✅ Đã xác nhận hoàn tiền cho vé ${selectedRefund.ma_ve}`);
+      setShowConfirmDialog(false);
+      showAlert(`Đã xác nhận hoàn tiền cho vé ${selectedRefund.ma_ve}`, 'success');
       await loadRefunds();
     } catch (error) {
       console.error('Lỗi xác nhận:', error);
-      alert('❌ Có lỗi xảy ra khi xác nhận hoàn tiền');
-    } finally {
       setShowConfirmDialog(false);
+      showAlert('Có lỗi xảy ra khi xác nhận hoàn tiền', 'error');
+    } finally {
       setSelectedRefund(null);
       setConfirmAction(null);
     }
@@ -96,13 +103,14 @@ const Refunds = () => {
   const processReject = async () => {
     try {
       await refundAPI.reject(selectedRefund.id);
-      alert(`❌ Đã từ chối hoàn tiền cho vé ${selectedRefund.ma_ve}`);
+      setShowConfirmDialog(false);
+      showAlert(`Đã từ chối hoàn tiền cho vé ${selectedRefund.ma_ve}`, 'success');
       await loadRefunds();
     } catch (error) {
       console.error('Lỗi từ chối:', error);
-      alert('❌ Có lỗi xảy ra khi từ chối');
-    } finally {
       setShowConfirmDialog(false);
+      showAlert('Có lỗi xảy ra khi từ chối', 'error');
+    } finally {
       setSelectedRefund(null);
       setConfirmAction(null);
     }
@@ -271,6 +279,8 @@ const Refunds = () => {
           </div>
         )}
       </Modal>
+
+      <AlertDialog isOpen={alertDialog.isOpen} onClose={() => setAlertDialog({ ...alertDialog, isOpen: false })} title={alertDialog.title} message={alertDialog.message} type={alertDialog.type} />
     </div>
   );
 };

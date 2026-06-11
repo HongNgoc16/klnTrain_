@@ -1,4 +1,6 @@
 @import '../../styles/variables';
+
+.admin-app {
 .pol-page {
 .page-header {
     display: flex;
@@ -70,6 +72,83 @@
     color: $gray;
     margin-bottom: 14px;
   }
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+
+    .pol-section__label {
+      margin-bottom: 0;
+    }
+  }
+}
+
+// ── Form (modal thêm chính sách) ──
+
+.btn-primary {
+  background: $primary;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.btn-secondary {
+  background: $gray;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+
+  label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: $dark;
+  }
+
+  input, select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid $light;
+    border-radius: 8px;
+  }
+
+  .hint {
+    display: block;
+    font-size: 11px;
+    color: $gray;
+    margin-top: 4px;
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid $light;
 }
 
 // ── Table ─
@@ -320,4 +399,5 @@
         } 
       }
   }
+}
 }

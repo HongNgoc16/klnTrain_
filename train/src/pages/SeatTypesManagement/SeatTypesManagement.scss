@@ -1,5 +1,6 @@
 @import '../../styles/variables';
 
+.admin-app {
 .seat-types-management {
   .page-header {
     display: flex;
@@ -253,4 +254,5 @@
     border-radius: 8px; 
     cursor: pointer;
  }
+}
 }

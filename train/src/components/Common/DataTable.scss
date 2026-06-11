@@ -1,5 +1,6 @@
 @import '../../styles/variables';
 
+.admin-app {
 .data-table-container {
   background: $white;
   border-radius: $border-radius-lg;
@@ -75,4 +76,5 @@
       font-size: 14px;
     }
   }
+}
 }

@@ -3,6 +3,7 @@ import { FiPlus, FiEdit, FiTrash2, FiSearch, FiGrid, FiLayers } from 'react-icon
 import DataTable from '../../components/Common/DataTable';
 import Modal from '../../components/Common/Modal';
 import ConfirmDialog from '../../components/Common/ConfirmDialog';
+import AlertDialog from '../../components/Common/AlertDialog';
 import { seatTypeAPI, carriageTypeAPI } from '../../services/api';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
 import './SeatTypesManagement.scss';
@@ -19,6 +20,12 @@ const SeatTypesManagement = () => {
   const [selectedCarriage, setSelectedCarriage] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [seatConfig, setSeatConfig] = useState([]);
+  const [alertDialog, setAlertDialog] = useState({ isOpen: false, title: '', message: '', type: 'success' });
+
+  const showAlert = (message, type = 'error', title = type === 'error' ? 'Lỗi' : 'Thành công') => {
+    setAlertDialog({ isOpen: true, title, message, type });
+  };
+
   const [formData, setFormData] = useState({
     ma_loai_ghe: '',
     id_loai_toa: '',
@@ -84,7 +91,7 @@ const SeatTypesManagement = () => {
       setShowModal(false);
       resetForm();
     } catch (error) {
-      alert(error.response?.data?.message || 'Có lỗi xảy ra');
+      showAlert(error.response?.data?.message || 'Có lỗi xảy ra');
     }
   };
 
@@ -95,7 +102,7 @@ const SeatTypesManagement = () => {
       setShowConfirm(false);
       setDeleteTarget(null);
     } catch (error) {
-      alert('Không thể xóa loại ghế này');
+      showAlert('Không thể xóa loại ghế này');
     }
   };
 
@@ -234,6 +241,8 @@ const SeatTypesManagement = () => {
       </Modal>
 
       <ConfirmDialog isOpen={showConfirm} onClose={() => setShowConfirm(false)} onConfirm={handleDelete} title="Xóa loại ghế" message={`Xóa loại ghế ${deleteTarget?.ten_loai_ghe}?`} confirmText="Xóa" cancelText="Hủy" />
+
+      <AlertDialog isOpen={alertDialog.isOpen} onClose={() => setAlertDialog({ ...alertDialog, isOpen: false })} title={alertDialog.title} message={alertDialog.message} type={alertDialog.type} />
     </div>
   );
 };

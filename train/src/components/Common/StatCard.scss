@@ -1,5 +1,6 @@
 @import '../../styles/variables';
 
+.admin-app {
 .stat-card {
   background: $white;
   border-radius: $border-radius-lg;
@@ -56,4 +57,5 @@
       }
     }
   }
+}
 }

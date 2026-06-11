@@ -1,5 +1,6 @@
 @import '../../styles/variables';
 
+.admin-app {
 .users-management {
   .page-header {
     display: flex;
@@ -128,4 +129,5 @@
       }
     }
   }
+}
 }

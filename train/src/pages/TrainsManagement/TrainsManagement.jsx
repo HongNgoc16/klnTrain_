@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { FiPlus, FiEdit, FiTrash2, FiEye, FiSearch } from 'react-icons/fi';
 import DataTable from '../../components/Common/DataTable';
 import Modal from '../../components/Common/Modal';
+import ConfirmDialog from '../../components/Common/ConfirmDialog';
+import AlertDialog from '../../components/Common/AlertDialog';
 import { trainAPI } from '../../services/api';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
 import './TrainsManagement.scss';
@@ -14,7 +16,14 @@ const TrainsManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [selectedTrain, setSelectedTrain] = useState(null);
+  const [alertDialog, setAlertDialog] = useState({ isOpen: false, title: '', message: '', type: 'success' });
+
+  const showAlert = (message, type = 'error', title = type === 'error' ? 'Lỗi' : 'Thành công') => {
+    setAlertDialog({ isOpen: true, title, message, type });
+  };
   const [formData, setFormData] = useState({
     so_hieu: '',
     ten_tau: '',
@@ -89,17 +98,17 @@ const TrainsManagement = () => {
     try {
       if (selectedTrain) {
         await trainAPI.update(selectedTrain.ma_tau, formData);
-        alert('Cập nhật tàu thành công!');
+        showAlert('Cập nhật tàu thành công!', 'success');
       } else {
         await trainAPI.create(formData);
-        alert('Thêm tàu thành công!');
+        showAlert('Thêm tàu thành công!', 'success');
       }
       await loadTrains();
       setShowAddModal(false);
       resetForm();
     } catch (error) {
       console.error('Lỗi lưu:', error);
-      alert('Có lỗi xảy ra, vui lòng thử lại!');
+      showAlert('Có lỗi xảy ra, vui lòng thử lại!', 'error');
     }
   };
 
@@ -125,16 +134,21 @@ const TrainsManagement = () => {
     setShowDetailModal(true);
   };
 
-  const handleDelete = async (train) => {
-    if (window.confirm(`Xóa tàu ${train.so_hieu}?`)) {
-      try {
-        await trainAPI.delete(train.ma_tau);
-        alert('Xóa tàu thành công!');
-        await loadTrains();
-      } catch (error) {
-        console.error('Lỗi xóa:', error);
-        alert('Có lỗi xảy ra, không thể xóa tàu này!');
-      }
+  const handleDelete = (train) => {
+    setDeleteTarget(train);
+    setShowConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await trainAPI.delete(deleteTarget.ma_tau);
+      setShowConfirm(false);
+      showAlert('Xóa tàu thành công!', 'success');
+      await loadTrains();
+    } catch (error) {
+      console.error('Lỗi xóa:', error);
+      setShowConfirm(false);
+      showAlert('Có lỗi xảy ra, không thể xóa tàu này!', 'error');
     }
   };
 
@@ -158,13 +172,13 @@ const TrainsManagement = () => {
       key: 'actions',
       render: (_, row) => (
         <div className="action-buttons">
-          <button className="btn-view" onClick={() => handleView(row)} title="Xem chi tiết">
+          <button className="btn-view" onClick={(e) => { e.stopPropagation(); handleView(row); }} title="Xem chi tiết">
             <FiEye />
           </button>
-          <button className="btn-edit" onClick={() => handleEdit(row)} title="Sửa">
+          <button className="btn-edit" onClick={(e) => { e.stopPropagation(); handleEdit(row); }} title="Sửa">
             <FiEdit />
           </button>
-          <button className="btn-delete" onClick={() => handleDelete(row)} title="Xóa">
+          <button className="btn-delete" onClick={(e) => { e.stopPropagation(); handleDelete(row); }} title="Xóa">
             <FiTrash2 />
           </button>
         </div>
@@ -305,6 +319,18 @@ const TrainsManagement = () => {
           </div>
         )}
       </Modal>
+
+      <ConfirmDialog
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={confirmDelete}
+        title="Xóa tàu"
+        message={`Xóa tàu ${deleteTarget?.so_hieu}?`}
+        confirmText="Xóa"
+        cancelText="Hủy"
+      />
+
+      <AlertDialog isOpen={alertDialog.isOpen} onClose={() => setAlertDialog({ ...alertDialog, isOpen: false })} title={alertDialog.title} message={alertDialog.message} type={alertDialog.type} />
     </div>
   );
 };

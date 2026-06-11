@@ -21,6 +21,7 @@ import Policies from './pages/Policies/Policies';
 import Refunds from './pages/Refunds/Refunds';
 import Coupons from './pages/Coupons/Coupons';
 import Settings from './pages/Settings/Settings';
+import Profile from './pages/Profile/Profile';
 
 function App() {
   return (
@@ -50,6 +51,7 @@ function App() {
             <Route path="refunds" element={<Refunds />} />
             <Route path="coupons" element={<Coupons />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="profile" element={<Profile />} />
           </Route>
         </Routes>
       </Router>

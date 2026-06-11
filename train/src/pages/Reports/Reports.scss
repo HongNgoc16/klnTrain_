@@ -1,5 +1,6 @@
 @import '../../styles/variables';
 
+.admin-app {
 .reports-page {
   .page-header {
     display: flex;
@@ -315,4 +316,5 @@
       }
     }
   }
+}
 }

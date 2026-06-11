@@ -3,6 +3,7 @@ import { FiPlus, FiTrash2, FiMapPin, FiEye, FiSearch, FiCalendar, FiClock } from
 import DataTable from '../../components/Common/DataTable';
 import Modal from '../../components/Common/Modal';
 import ConfirmDialog from '../../components/Common/ConfirmDialog';
+import AlertDialog from '../../components/Common/AlertDialog';
 import { scheduleAPI, trainAPI, stationAPI } from '../../services/api';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
 import './SchedulesManagement.scss';
@@ -20,6 +21,13 @@ const SchedulesManagement = () => {
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [scheduleStations, setScheduleStations] = useState([]);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [showRemoveStationConfirm, setShowRemoveStationConfirm] = useState(false);
+  const [removeStationTarget, setRemoveStationTarget] = useState(null);
+  const [alertDialog, setAlertDialog] = useState({ isOpen: false, title: '', message: '', type: 'success' });
+
+  const showAlert = (message, type = 'error', title = type === 'error' ? 'Lỗi' : 'Thành công') => {
+    setAlertDialog({ isOpen: true, title, message, type });
+  };
   const [formData, setFormData] = useState({
     id_tau: '',
     id_ga_di: '',
@@ -76,7 +84,7 @@ const SchedulesManagement = () => {
       setShowModal(false);
       resetForm();
     } catch (error) {
-      alert(error.response?.data?.message || 'Có lỗi xảy ra');
+      showAlert(error.response?.data?.message || 'Có lỗi xảy ra');
     }
   };
 
@@ -87,7 +95,8 @@ const SchedulesManagement = () => {
       setShowConfirm(false);
       setDeleteTarget(null);
     } catch (error) {
-      alert(error.response?.data?.message || 'Không thể xóa lịch này');
+      setShowConfirm(false);
+      showAlert(error.response?.data?.message || 'Không thể xóa lịch này');
     }
   };
 
@@ -99,18 +108,24 @@ const SchedulesManagement = () => {
       setShowAddStationModal(false);
       resetStationForm();
     } catch (error) {
-      alert('Thêm ga dừng thất bại');
+      showAlert('Thêm ga dừng thất bại');
     }
   };
 
-  const handleRemoveStation = async (stationId) => {
-    if (window.confirm('Xóa ga dừng này?')) {
-      try {
-        await scheduleAPI.removeStation(selectedSchedule.id_lich_chay, stationId);
-        await loadScheduleStations(selectedSchedule.id_lich_chay);
-      } catch (error) {
-        alert('Xóa ga dừng thất bại');
-      }
+  const handleRemoveStation = (stationId) => {
+    setRemoveStationTarget(stationId);
+    setShowRemoveStationConfirm(true);
+  };
+
+  const confirmRemoveStation = async () => {
+    try {
+      await scheduleAPI.removeStation(selectedSchedule.id_lich_chay, removeStationTarget);
+      await loadScheduleStations(selectedSchedule.id_lich_chay);
+    } catch (error) {
+      showAlert('Xóa ga dừng thất bại');
+    } finally {
+      setShowRemoveStationConfirm(false);
+      setRemoveStationTarget(null);
     }
   };
 
@@ -144,7 +159,6 @@ const SchedulesManagement = () => {
       render: (_, row) => (
         <div className="action-buttons">
           <button className="btn-station" onClick={() => { setSelectedSchedule(row); loadScheduleStations(row.id_lich_chay); setShowStationModal(true); }} title="Xem ga dừng"><FiMapPin /></button>
-          <button className="btn-delete" onClick={() => { setDeleteTarget(row); setShowConfirm(true); }} title="Xóa"><FiTrash2 /></button>
         </div>
       )
     }
@@ -222,9 +236,7 @@ const SchedulesManagement = () => {
                     <td className="km-cell">{idx === 0 ? '0' : (s.khoang_cach_km - (scheduleStations[idx-1]?.khoang_cach_km || 0)).toLocaleString()}</td>
                     <td className="km-cell">{s.khoang_cach_km?.toLocaleString()}</td>
                     <td className="minute-cell">{s.thoi_gian_dung || 0}</td>
-                    <td className="action-cell">
-                      <button className="btn-delete-sm" onClick={() => handleRemoveStation(s.id_ga)} title="Xóa ga dừng"><FiTrash2 /></button>
-                    </td>
+                    
                   </tr>
                 ))}
                 {scheduleStations.length === 0 && (
@@ -244,7 +256,7 @@ const SchedulesManagement = () => {
                     <div className="timeline-dot"></div>
                     <div className="timeline-content">
                       <div className="timeline-station">{s.ten_ga}</div>
-                      <div className="timeline-time">{s.gio_di || s.gio_den}</div>
+                     
                       <div className="timeline-km">{idx === 0 ? '0 km' : `${(s.khoang_cach_km - (scheduleStations[idx-1]?.khoang_cach_km || 0)).toLocaleString()} km`}</div>
                     </div>
                     {idx < scheduleStations.length - 1 && <div className="timeline-line"></div>}
@@ -257,6 +269,10 @@ const SchedulesManagement = () => {
       </Modal>
 
       <ConfirmDialog isOpen={showConfirm} onClose={() => setShowConfirm(false)} onConfirm={handleDelete} title="Xóa lịch chạy" message={`Xóa lịch chạy ${deleteTarget?.so_hieu} - ${deleteTarget?.ga_di} → ${deleteTarget?.ga_den}?`} confirmText="Xóa" cancelText="Hủy" />
+
+      <ConfirmDialog isOpen={showRemoveStationConfirm} onClose={() => setShowRemoveStationConfirm(false)} onConfirm={confirmRemoveStation} title="Xóa ga dừng" message="Xóa ga dừng này khỏi lộ trình?" confirmText="Xóa" cancelText="Hủy" />
+
+      <AlertDialog isOpen={alertDialog.isOpen} onClose={() => setAlertDialog({ ...alertDialog, isOpen: false })} title={alertDialog.title} message={alertDialog.message} type={alertDialog.type} />
     </div>
   );
 };

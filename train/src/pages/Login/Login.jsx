@@ -32,7 +32,7 @@ const Login = () => {
         console.log('Chuyển sang dashboard...'); // Debug
         
         // Chuyển trang
-         window.location.href = '/dashboard';
+        navigate('/admin/dashboard');
       } else {
         setError(response.data.message || 'Đăng nhập thất bại');
       }

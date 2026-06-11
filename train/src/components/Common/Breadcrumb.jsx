@@ -6,6 +6,7 @@ import './Breadcrumb.scss';
 const Breadcrumb = () => {
   const location = useLocation();
   const pathnames = location.pathname.split('/').filter(x => x);
+  if (pathnames[0] === 'admin') pathnames.shift();
 
   const routeNames = {
     'dashboard': 'Tổng quan',
@@ -32,11 +33,11 @@ const Breadcrumb = () => {
 
   return (
     <div className="breadcrumb">
-      <Link to="/dashboard" className="breadcrumb-item">
+      <Link to="/admin/dashboard" className="breadcrumb-item">
         <FiHome /> Trang chủ
       </Link>
       {pathnames.map((name, index) => {
-        const routeTo = `/${pathnames.slice(0, index + 1).join('/')}`;
+        const routeTo = `/admin/${pathnames.slice(0, index + 1).join('/')}`;
         const isLast = index === pathnames.length - 1;
         const displayName = routeNames[name] || name;
 

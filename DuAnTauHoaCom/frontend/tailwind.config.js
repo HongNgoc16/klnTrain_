@@ -3,12 +3,14 @@ export default {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
+    "../DieuPhoiVien/frontend/src/**/*.{js,jsx}",
   ],
   theme: {
     extend: {
       fontFamily: {
         saira: ['"Saira Stencil One"', 'cursive'],
         roboto: ['Roboto', 'sans-serif'],
+        montserrat: ['Montserrat', 'sans-serif'],
       },
       keyframes: {
         fadeIn: {

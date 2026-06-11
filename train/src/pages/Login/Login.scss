@@ -1,5 +1,6 @@
 @import '../../styles/variables';
 
+.admin-app {
 .login-container {
   min-height: 100vh;
   display: flex;
@@ -107,4 +108,5 @@
       color: $gray;
     }
   }
+}
 }

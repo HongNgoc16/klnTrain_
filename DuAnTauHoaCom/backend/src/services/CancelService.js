@@ -37,12 +37,14 @@ const tinhPhiHuy = async (idVe) => {
   const departAt  = new Date(`${ngayChay}T${gioChay}+07:00`)
   const gioConLai = (departAt.getTime() - Date.now()) / (1000 * 60 * 60)
 
-  // Lấy chính sách hủy phù hợp (giờ trước giờ chạy >= gioConLai, order ASC)
+  // Lấy chính sách hủy phù hợp: tier có gio_truoc_gio_chay lớn nhất mà thời gian còn lại vẫn đáp ứng
+  // (vd: còn lại >= 24h -> 10%, còn lại >= 4h (và < 24h) -> 20%, còn lại < 4h -> không cho hủy)
   const csHuy = await ChinhSachHuy.findOne({
-    where: { gio_truoc_gio_chay: { [Op.gte]: Math.max(0, Math.floor(gioConLai)) } },
-    order: [['gio_truoc_gio_chay', 'ASC']],
+    where: { gio_truoc_gio_chay: { [Op.lte]: gioConLai } },
+    order: [['gio_truoc_gio_chay', 'DESC'], ['id_cs_huy', 'ASC']],
   })
 
+  const canCancel = gioConLai >= 4
   const phiHuyPct = csHuy ? parseFloat(csHuy.phi_huy) : 100
   const giaVe = parseFloat(ve.gia_ve)
   const phiHuy = Math.floor(giaVe * phiHuyPct / 100)
@@ -55,7 +57,7 @@ const tinhPhiHuy = async (idVe) => {
     phiHuy,
     tienHoan,
     gioConLai: Math.max(0, gioConLai),
-    canCancel: gioConLai > 0,
+    canCancel,
     idCsHuy: csHuy?.id_cs_huy || null,
   }
 }

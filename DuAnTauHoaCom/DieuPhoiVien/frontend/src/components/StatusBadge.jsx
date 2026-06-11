@@ -1,5 +1,5 @@
 const MAP = {
-  dung_gio:     { label: 'Dừng giờ',     cls: 'bg-blue-100   text-blue-700'    },
+  dung_gio:     { label: 'Đúng giờ',     cls: 'bg-blue-100   text-blue-700'    },
   da_chay:      { label: 'Đã chạy',      cls: 'bg-gray-100   text-gray-600'    },
   huy:          { label: 'Đã hủy',       cls: 'bg-red-100    text-red-700'     },
   dieu_chinh:   { label: 'Điều chỉnh',   cls: 'bg-orange-100 text-orange-700'  },

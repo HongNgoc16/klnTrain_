@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { FiPlus, FiEdit, FiTrash2, FiSearch, FiCalendar, FiPercent, FiDollarSign } from 'react-icons/fi';
 import DataTable from '../../components/Common/DataTable';
 import Modal from '../../components/Common/Modal';
+import ConfirmDialog from '../../components/Common/ConfirmDialog';
 import './Coupons.scss';
 
 const Coupons = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [selectedCoupon, setSelectedCoupon] = useState(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   
   // Mock data - từ bảng Coupon trong CSDL
   const [coupons, setCoupons] = useState([
@@ -95,9 +98,14 @@ const Coupons = () => {
   };
 
   const handleDelete = (coupon) => {
-    if (window.confirm(`Xóa mã giảm giá ${coupon.ma_km}?`)) {
-      setCoupons(coupons.filter(c => c.id !== coupon.id));
-    }
+    setDeleteTarget(coupon);
+    setShowConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    setCoupons(coupons.filter(c => c.id !== deleteTarget.id));
+    setShowConfirm(false);
+    setDeleteTarget(null);
   };
 
   const formatCurrency = (amount) => {
@@ -237,6 +245,16 @@ const Coupons = () => {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={confirmDelete}
+        title="Xóa mã giảm giá"
+        message={`Bạn có chắc chắn muốn xóa mã giảm giá "${deleteTarget?.ma_km}"?`}
+        confirmText="Xóa"
+        cancelText="Hủy"
+      />
     </div>
   );
 };

@@ -4,6 +4,7 @@ import { CiLock, CiUnlock } from "react-icons/ci";
 import DataTable from '../../components/Common/DataTable';
 import Modal from '../../components/Common/Modal';
 import ConfirmDialog from '../../components/Common/ConfirmDialog';
+import AlertDialog from '../../components/Common/AlertDialog';
 import { customerAPI, userAPI } from '../../services/api';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
 import './CustomersManagement.scss';
@@ -20,6 +21,11 @@ const CustomersManagement = () => {
   const [customerTickets, setCustomerTickets] = useState([]);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [statusTarget, setStatusTarget] = useState(null);  // Thêm state cho target status
+  const [alertDialog, setAlertDialog] = useState({ isOpen: false, title: '', message: '', type: 'success' });
+
+  const showAlert = (message, type = 'error', title = type === 'error' ? 'Lỗi' : 'Thành công') => {
+    setAlertDialog({ isOpen: true, title, message, type });
+  };
   const [formData, setFormData] = useState({
     ho_ten: '',
     email: '',
@@ -86,11 +92,11 @@ const CustomersManagement = () => {
     e.preventDefault();
     try {
       await customerAPI.update(selectedCustomer.id_tai_khoan, formData);
-      alert('Cập nhật thông tin thành công');
-      await loadCustomers();
       setShowEditModal(false);
+      showAlert('Cập nhật thông tin thành công', 'success');
+      await loadCustomers();
     } catch (error) {
-      alert('Có lỗi xảy ra');
+      showAlert('Có lỗi xảy ra', 'error');
     }
   };
 
@@ -109,25 +115,27 @@ const CustomersManagement = () => {
     
     try {
       await userAPI.updateStatus(statusTarget.id_tai_khoan, { trang_thai: newStatus });
-      alert(`Đã ${actionText} tài khoản ${statusTarget.ho_ten} thành công`);
-      await loadCustomers();
-    } catch (error) {
-      alert(`Có lỗi xảy ra khi ${actionText} tài khoản`);
-    } finally {
       setShowStatusConfirm(false);
       setStatusTarget(null);
+      showAlert(`Đã ${actionText} tài khoản ${statusTarget.ho_ten} thành công`, 'success');
+      await loadCustomers();
+    } catch (error) {
+      setShowStatusConfirm(false);
+      setStatusTarget(null);
+      showAlert(`Có lỗi xảy ra khi ${actionText} tài khoản`, 'error');
     }
   };
 
   const handleDelete = async () => {
     try {
       await customerAPI.delete(deleteTarget.id_tai_khoan);
-      alert('Xóa khách hàng thành công');
-      await loadCustomers();
       setShowConfirm(false);
       setDeleteTarget(null);
+      showAlert('Xóa khách hàng thành công', 'success');
+      await loadCustomers();
     } catch (error) {
-      alert('Không thể xóa khách hàng này');
+      setShowConfirm(false);
+      showAlert('Không thể xóa khách hàng này', 'error');
     }
   };
 
@@ -141,7 +149,6 @@ const CustomersManagement = () => {
   };
 
   const columns = [
-    { title: 'ID', key: 'id_tai_khoan', width: '50px' },
     { title: 'Họ tên', key: 'ho_ten', width: '160px' },
     { title: 'Email', key: 'email', width: '180px' },
     { title: 'Số điện thoại', key: 'so_dien_thoai', width: '100px' },
@@ -277,9 +284,11 @@ const CustomersManagement = () => {
             ? `Bạn có chắc chắn muốn KHÓA tài khoản "${statusTarget?.ho_ten}"? Khách hàng sẽ không thể đăng nhập và đặt vé.`
             : `Bạn có chắc chắn muốn MỞ KHÓA tài khoản "${statusTarget?.ho_ten}"? Khách hàng sẽ có thể đăng nhập và đặt vé bình thường.`
         } 
-        confirmText={statusTarget?.trang_thai === 'hoat_dong' ? 'Khóa' : 'Mở khóa'} 
-        cancelText="Hủy" 
+        confirmText={statusTarget?.trang_thai === 'hoat_dong' ? 'Khóa' : 'Mở khóa'}
+        cancelText="Hủy"
       />
+
+      <AlertDialog isOpen={alertDialog.isOpen} onClose={() => setAlertDialog({ ...alertDialog, isOpen: false })} title={alertDialog.title} message={alertDialog.message} type={alertDialog.type} />
     </div>
   );
 };

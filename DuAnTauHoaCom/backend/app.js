@@ -12,10 +12,11 @@ const app  = express()
 const PORT = process.env.PORT || 5000
 
 // ─── Middleware ────────────────────────────────────────────────────
-// Cho phép nhiều origin: portal hành khách (5173) + portal điều phối (5174)
+// Cho phép nhiều origin: portal hành khách (5173) + portal điều phối (5174) + portal quản trị (3000)
 const ALLOWED_ORIGINS = [
   process.env.FRONTEND_URL      || 'http://localhost:5173',
   process.env.DISPATCHER_URL    || 'http://localhost:5174',
+  process.env.ADMIN_URL         || 'http://localhost:3000',
 ]
 app.use(cors({
   origin: (origin, callback) => {
@@ -30,6 +31,7 @@ app.use(express.urlencoded({ extended: true }))
 
 // ─── Routes ───────────────────────────────────────────────────────
 app.use('/api', routes)
+app.use('/api/admin', require('./src/admin'))
 
 // ─── Error Handling ───────────────────────────────────────────────
 app.use(notFoundHandler)
