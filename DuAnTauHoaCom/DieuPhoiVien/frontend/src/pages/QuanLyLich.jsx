@@ -9,7 +9,7 @@ import {
 const pTime = t => { if (!t) return '--:--'; const s = String(t); const m = s.match(/T(\d{2}:\d{2})/); return m ? m[1] : s.slice(0, 5) }
 const THU   = { '1':'CN','2':'T2','3':'T3','4':'T4','5':'T5','6':'T6','7':'T7' }
 const DAYS  = [['2','T2'],['3','T3'],['4','T4'],['5','T5'],['6','T6'],['7','T7'],['1','CN']]
-const inputCls = "w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-[#8C1D19] outline-none"
+const inputCls = "w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-[#8C1D19] focus:ring-0 outline-none"
 
 const FormField = ({ label, children, sub }) => (
   <div>
@@ -226,7 +226,7 @@ export default function QuanLyLich() {
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">Lọc theo tàu</label>
           <select value={filterTau} onChange={e => setFilterTau(e.target.value)}
-            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-[#8C1D19] outline-none min-w-[200px]">
+            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-[#8C1D19] focus:ring-0 outline-none min-w-[200px]">
             <option value="">Tất cả tàu</option>
             {tauList.map(t => <option key={t.id_tau} value={t.id_tau}>{t.so_hieu} — {t.ten_tau}</option>)}
           </select>

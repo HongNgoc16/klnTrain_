@@ -109,15 +109,15 @@ const ExchangeSearch = ({ onFound, onError }) => {
       <div className="rounded-md bg-amber-50/80 border border-amber-300 p-3 text-xs text-amber-800">
         <p className="font-semibold mb-1">Điều kiện đổi vé (theo ĐSVN):</p>
         <ul className="space-y-0.5">
-          <li>• Trước giờ khởi hành <strong>ít nhất 24 giờ</strong></li>
-          <li>• Mỗi vé chỉ được đổi <strong>01 lần duy nhất</strong></li>
-          <li>• Phí đổi vé: <strong>5%</strong> (tối thiểu 20.000đ)</li>
-          <li>• Vé mới đắt hơn: trả thêm <strong>phí + chênh lệch</strong></li>
+          <li>Trước giờ khởi hành <strong>ít nhất 24 giờ</strong></li>
+          <li>Mỗi vé chỉ được đổi <strong>01 lần duy nhất</strong></li>
+          <li>Phí đổi vé: <strong>20.000đ/vé</strong></li>
+          <li>Trong vòng 24h trước giờ khởi hành: <strong>không</strong> được phép đổi vé</li>
         </ul>
       </div>
 
-      <div className="mt-3 border-t border-amber-300/40 pt-2 text-center">
-        <p className="text-[#8C1D19] text-xs">THE KLN TRAIN — #Hành trình trở về</p>
+      <div className="mt-2 border-t border-amber-300/40 pt-1 text-center">
+        <p className="text-[#8C1D19] text-xs">THE KLN TRAIN - #Hành trình trở về</p>
       </div>
     </form>
   )

@@ -70,8 +70,13 @@ const PaymentMethod = () => {
     { id: 'atm', name: 'Thẻ ATM nội địa', icon: <FaBuilding />, desc: 'Chuyển khoản ATM', fee: 14100 }
   ]
 
+  const feeAmount = methods.find(m => m.id === selectedMethod)?.fee || 0
+  const grandTotal = totalAmount + feeAmount
+
   const handleConfirm = () => {
-    navigate('/thanh-toan/qr', { state: bookingData })
+    navigate('/thanh-toan/qr', {
+      state: { ...bookingData, totalAmount: grandTotal, phuongThuc: selectedMethod, paymentFee: feeAmount },
+    })
   }
 
   // Component hiển thị 1 chuyến tàu (tóm tắt)
@@ -177,7 +182,7 @@ const PaymentMethod = () => {
           <div className="space-y-6">
             <div className="bg-white rounded-lg shadow-md p-5 text-center">
               <p className="text-gray-500">Xác nhận thanh toán</p>
-              <p className="text-3xl font-bold text-[#ff8a00]">{formatPrice(totalAmount)}</p>
+              <p className="text-3xl font-bold text-[#ff8a00]">{formatPrice(grandTotal)}</p>
               <button onClick={handleConfirm} className="w-full mt-4 py-3 bg-[#ff8a00] text-white rounded-lg font-bold hover:bg-[#e07a00]">
                 Xác nhận thanh toán
               </button>
@@ -235,10 +240,16 @@ const PaymentMethod = () => {
                   <span>Phí dịch vụ</span>
                   <span>{formatPrice(totalPassengers * (isRoundTrip ? 40000 : 20000))}</span>
                 </div>
+                {feeAmount > 0 && (
+                  <div className="flex justify-between">
+                    <span>Phí thanh toán ({methods.find(m => m.id === selectedMethod)?.name})</span>
+                    <span>{formatPrice(feeAmount)}</span>
+                  </div>
+                )}
                 <div className="border-t pt-2 mt-2">
                   <div className="flex justify-between font-bold">
                     <span>Tổng cộng</span>
-                    <span className="text-[#ff8a00]">{formatPrice(totalAmount)}</span>
+                    <span className="text-[#ff8a00]">{formatPrice(grandTotal)}</span>
                   </div>
                 </div>
               </div>

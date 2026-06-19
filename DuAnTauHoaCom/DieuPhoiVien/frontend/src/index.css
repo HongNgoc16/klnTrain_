@@ -1,3 +1,14 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Windows forced-colors/high-contrast tự vẽ thêm 1 viền focus quanh input/select
+   (ngoài border do CSS quy định), gây hiệu ứng "2 viền". forced-color-adjust: none
+   tắt việc đó, chỉ còn lại viền (border) đổi màu khi focus theo CSS của ứng dụng. */
+input, select, textarea {
+  forced-color-adjust: none;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}

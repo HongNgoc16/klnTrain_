@@ -50,26 +50,35 @@ const calcDelayedTime = (gioKhoiHanh, delayPhut) => {
 
 // ─── Tạo ThongBao cho khách hàng có vé active trên 1 chuyến ──────
 const notifyAffectedCustomers = async (idChuyen, { tieuDe, noiDung, loai }) => {
-  const accounts = await sequelize.query(
-    `SELECT DISTINCT ddv.id_tai_khoan
-     FROM Ve v WITH (NOLOCK)
-     JOIN DonDatVe ddv WITH (NOLOCK) ON ddv.id_don_dat_ve = v.id_don_dat_ve
-     WHERE v.id_chuyen = ${parseInt(idChuyen)}
-       AND v.trang_thai NOT IN ('da_huy','da_doi')
-       AND ddv.id_tai_khoan IS NOT NULL`,
-    { type: sequelize.QueryTypes.SELECT }
-  ).catch(() => [])
-  if (accounts.length === 0) return 0
+  // Thử proc sp_DP_ThongBaoKhachChuyen (sql_dieuphoi_procs.sql), fallback raw SQL nếu chưa cài
+  try {
+    const [result] = await sequelize.query(
+      `EXEC sp_DP_ThongBaoKhachChuyen @id_chuyen = :idChuyen, @tieu_de = :tieuDe, @noi_dung = :noiDung, @loai = :loai`,
+      { replacements: { idChuyen: parseInt(idChuyen), tieuDe, noiDung, loai }, type: sequelize.QueryTypes.SELECT }
+    )
+    return parseInt(result?.so_luong ?? 0)
+  } catch {
+    const accounts = await sequelize.query(
+      `SELECT DISTINCT ddv.id_tai_khoan
+       FROM Ve v WITH (NOLOCK)
+       JOIN DonDatVe ddv WITH (NOLOCK) ON ddv.id_don_dat_ve = v.id_don_dat_ve
+       WHERE v.id_chuyen = ${parseInt(idChuyen)}
+         AND v.trang_thai NOT IN ('da_huy','da_doi')
+         AND ddv.id_tai_khoan IS NOT NULL`,
+      { type: sequelize.QueryTypes.SELECT }
+    ).catch(() => [])
+    if (accounts.length === 0) return 0
 
-  const tieuDeSafe = tieuDe.replace(/'/g, "''")
-  const noiDungSafe = noiDung.replace(/'/g, "''")
-  const vals = accounts.map(a =>
-    `(${a.id_tai_khoan}, N'${tieuDeSafe}', N'${noiDungSafe}', '${loai}', 0, '/tra-cuu-don', GETDATE())`
-  ).join(',')
-  await sequelize.query(
-    `INSERT INTO ThongBao (id_tai_khoan, tieu_de, noi_dung, loai, da_doc, lien_ket, thoi_gian_tao) VALUES ${vals}`
-  ).catch(e => console.warn('[notifyAffectedCustomers]', e.message))
-  return accounts.length
+    const tieuDeSafe = tieuDe.replace(/'/g, "''")
+    const noiDungSafe = noiDung.replace(/'/g, "''")
+    const vals = accounts.map(a =>
+      `(${a.id_tai_khoan}, N'${tieuDeSafe}', N'${noiDungSafe}', '${loai}', 0, '/tra-cuu-don', GETDATE())`
+    ).join(',')
+    await sequelize.query(
+      `INSERT INTO ThongBao (id_tai_khoan, tieu_de, noi_dung, loai, da_doc, lien_ket, thoi_gian_tao) VALUES ${vals}`
+    ).catch(e => console.warn('[notifyAffectedCustomers]', e.message))
+    return accounts.length
+  }
 }
 
 // ─── Dashboard ────────────────────────────────────────────────────
@@ -78,8 +87,9 @@ const getDashboard = async (req, res, next) => {
     const today    = vnDate(0)
     const tomorrow = vnDate(1)
 
-    // Dùng raw SQL cho DieuPhoi vì Op.gte: new Date() gây lỗi conversion MSSQL
-    const [todayTrips, tomorrowRaw, recentEventsRaw] = await Promise.all([
+    // Thử proc sp_DP_DemChuyenTheoNgay / sp_DP_SuKienGanDay (sql_dieuphoi_procs.sql),
+    // fallback raw SQL nếu chưa cài (Op.gte: new Date() gây lỗi conversion MSSQL nên không dùng ORM)
+    const [todayTrips, tomorrowCountRaw, recentEventsRaw] = await Promise.all([
       ChuyenTau.findAll({
         where: { ngay_chay: today },
         include: [{ model: LichChay, include: [
@@ -90,10 +100,16 @@ const getDashboard = async (req, res, next) => {
         order: [[LichChay, 'gio_khoi_hanh', 'ASC']],
       }),
       sequelize.query(
+        `EXEC sp_DP_DemChuyenTheoNgay @ngay = :ngay`,
+        { replacements: { ngay: tomorrow }, type: sequelize.QueryTypes.SELECT }
+      ).catch(() => sequelize.query(
         `SELECT COUNT(*) AS cnt FROM ChuyenTau WHERE ngay_chay='${tomorrow}' AND trang_thai<>'huy'`,
         { type: sequelize.QueryTypes.SELECT }
-      ),
+      )),
       sequelize.query(
+        `EXEC sp_DP_SuKienGanDay @gio_truoc = :gioTruoc, @top_n = :topN`,
+        { replacements: { gioTruoc: 24, topN: 10 }, type: sequelize.QueryTypes.SELECT }
+      ).catch(() => sequelize.query(
         `SELECT dp.id_dieu_phoi, dp.id_chuyen, dp.loai_su_kien, dp.mo_ta,
                 dp.delay_phut, dp.thoi_gian_tao,
                 t.so_hieu AS ma_tau,
@@ -107,10 +123,10 @@ const getDashboard = async (req, res, next) => {
          ORDER BY dp.thoi_gian_tao DESC
          OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY`,
         { type: sequelize.QueryTypes.SELECT }
-      ),
+      )),
     ])
 
-    const tomorrowCount = parseInt(tomorrowRaw[0]?.cnt ?? 0)
+    const tomorrowCount = parseInt(tomorrowCountRaw[0]?.cnt ?? 0)
 
     const byStatus = {}
     todayTrips.forEach(c => { byStatus[c.trang_thai] = (byStatus[c.trang_thai] || 0) + 1 })
@@ -163,66 +179,104 @@ const getChuyenTauList = async (req, res, next) => {
     const lm = Math.min(100, Math.max(1, parseInt(limit) || 20))
     const offset = (pg - 1) * lm
 
-    // Dùng raw SQL cho ngay_chay để tránh Sequelize MSSQL datetime conversion bug
-    // Op.between với string dates đôi khi gây "Conversion failed"
-    const dateCond = (() => {
-      if (ngay && ngayDen && ngay === ngayDen) return `ct.ngay_chay = '${ngay}'`
-      if (ngay && ngayDen) return `ct.ngay_chay BETWEEN '${ngay}' AND '${ngayDen}'`
-      if (ngay) return `ct.ngay_chay >= '${ngay}'`
-      return '1=1'
-    })()
-    const statusCond = trangThai ? `AND ct.trang_thai = '${trangThai.replace(/'/g,"''")}'` : ''
-    const tauCond    = idTau     ? `AND lc.id_tau = ${parseInt(idTau)}`                     : ''
-    const lichCond   = idLichChay? `AND ct.id_lich_chay = ${parseInt(idLichChay)}`           : ''
+    // Thử proc sp_DP_DanhSachChuyen (sql_dieuphoi_procs.sql) — trả kèm total_count qua COUNT(*) OVER()
+    // Fallback raw SQL nếu chưa cài (Op.between với string dates đôi khi gây "Conversion failed" nên không dùng ORM)
+    let rows, count
+    try {
+      rows = await sequelize.query(
+        `EXEC sp_DP_DanhSachChuyen @ngay = :ngay, @ngay_den = :ngayDen, @trang_thai = :trangThai,
+           @id_tau = :idTau, @id_lich_chay = :idLichChay, @offset = :offset, @limit = :limit`,
+        {
+          replacements: {
+            ngay: ngay || null,
+            ngayDen: ngayDen || null,
+            trangThai: trangThai || null,
+            idTau: idTau ? parseInt(idTau) : null,
+            idLichChay: idLichChay ? parseInt(idLichChay) : null,
+            offset, limit: lm,
+          },
+          type: sequelize.QueryTypes.SELECT,
+        }
+      )
+      count = parseInt(rows[0]?.total_count ?? 0)
+    } catch {
+      const dateCond = (() => {
+        if (ngay && ngayDen && ngay === ngayDen) return `ct.ngay_chay = '${ngay}'`
+        if (ngay && ngayDen) return `ct.ngay_chay BETWEEN '${ngay}' AND '${ngayDen}'`
+        if (ngay) return `ct.ngay_chay >= '${ngay}'`
+        return '1=1'
+      })()
+      const statusCond = trangThai ? `AND ct.trang_thai = '${trangThai.replace(/'/g,"''")}'` : ''
+      const tauCond    = idTau     ? `AND lc.id_tau = ${parseInt(idTau)}`                     : ''
+      const lichCond   = idLichChay? `AND ct.id_lich_chay = ${parseInt(idLichChay)}`           : ''
 
-    const baseSql = `
-      FROM ChuyenTau ct
-      JOIN LichChay lc  ON lc.id_lich_chay = ct.id_lich_chay
-      JOIN Tau tau       ON tau.id_tau = lc.id_tau
-      JOIN GaTau gdi    ON gdi.id_ga = lc.id_ga_di
-      JOIN GaTau gden   ON gden.id_ga = lc.id_ga_den
-      WHERE ${dateCond} ${statusCond} ${tauCond} ${lichCond}
-    `
+      const baseSql = `
+        FROM ChuyenTau ct
+        JOIN LichChay lc  ON lc.id_lich_chay = ct.id_lich_chay
+        JOIN Tau tau       ON tau.id_tau = lc.id_tau
+        JOIN GaTau gdi    ON gdi.id_ga = lc.id_ga_di
+        JOIN GaTau gden   ON gden.id_ga = lc.id_ga_den
+        WHERE ${dateCond} ${statusCond} ${tauCond} ${lichCond}
+      `
 
-    const [countRows] = await sequelize.query(`SELECT COUNT(*) AS cnt ${baseSql}`, { type: sequelize.QueryTypes.SELECT })
-    const count = parseInt(countRows?.cnt ?? 0)
+      const [countRows] = await sequelize.query(`SELECT COUNT(*) AS cnt ${baseSql}`, { type: sequelize.QueryTypes.SELECT })
+      count = parseInt(countRows?.cnt ?? 0)
 
-    const rows = await sequelize.query(
-      `SELECT ct.id_chuyen, ct.id_lich_chay, ct.ngay_chay, ct.trang_thai, ct.ghi_chu,
-              tau.id_tau, tau.so_hieu AS ma_tau, tau.ten_tau,
-              gdi.id_ga AS id_ga_di, gdi.ten_ga AS ten_ga_di, gdi.ma_ga_viet_tat AS vt_ga_di,
-              gden.id_ga AS id_ga_den, gden.ten_ga AS ten_ga_den, gden.ma_ga_viet_tat AS vt_ga_den,
-              lc.gio_khoi_hanh, lc.gio_du_kien_den
-       ${baseSql}
-       ORDER BY ct.ngay_chay DESC, lc.gio_khoi_hanh ASC
-       OFFSET ${offset} ROWS FETCH NEXT ${lm} ROWS ONLY`,
-      { type: sequelize.QueryTypes.SELECT }
-    )
+      rows = await sequelize.query(
+        `SELECT ct.id_chuyen, ct.id_lich_chay, ct.ngay_chay, ct.trang_thai, ct.ghi_chu,
+                tau.id_tau, tau.so_hieu AS ma_tau, tau.ten_tau,
+                gdi.id_ga AS id_ga_di, gdi.ten_ga AS ten_ga_di, gdi.ma_ga_viet_tat AS vt_ga_di,
+                gden.id_ga AS id_ga_den, gden.ten_ga AS ten_ga_den, gden.ma_ga_viet_tat AS vt_ga_den,
+                lc.gio_khoi_hanh, lc.gio_du_kien_den
+         ${baseSql}
+         ORDER BY ct.ngay_chay DESC, lc.gio_khoi_hanh ASC
+         OFFSET ${offset} ROWS FETCH NEXT ${lm} ROWS ONLY`,
+        { type: sequelize.QueryTypes.SELECT }
+      )
+    }
 
-    // Số vé đã bán
+    // Số vé đã bán theo từng chuyến
     const ids = rows.map(r => r.id_chuyen)
     let veMap = {}
     if (ids.length > 0) {
-      const veCounts = await sequelize.query(
-        `SELECT id_chuyen, COUNT(*) AS cnt FROM Ve WHERE id_chuyen IN (${ids.join(',')}) AND trang_thai NOT IN ('da_huy','da_doi') GROUP BY id_chuyen`,
-        { type: sequelize.QueryTypes.SELECT }
-      )
-      veMap = Object.fromEntries(veCounts.map(v => [v.id_chuyen, parseInt(v.cnt)]))
+      const idsStr = ids.join(',')
+      try {
+        const veCounts = await sequelize.query(
+          `EXEC sp_DP_DemVeTheoDanhSachChuyen @ids = :ids`,
+          { replacements: { ids: idsStr }, type: sequelize.QueryTypes.SELECT }
+        )
+        veMap = Object.fromEntries(veCounts.map(v => [v.id_chuyen, parseInt(v.cnt)]))
+      } catch {
+        const veCounts = await sequelize.query(
+          `SELECT id_chuyen, COUNT(*) AS cnt FROM Ve WHERE id_chuyen IN (${idsStr}) AND trang_thai NOT IN ('da_huy','da_doi') GROUP BY id_chuyen`,
+          { type: sequelize.QueryTypes.SELECT }
+        )
+        veMap = Object.fromEntries(veCounts.map(v => [v.id_chuyen, parseInt(v.cnt)]))
+      }
     }
 
-    // Sự kiện gần nhất mỗi chuyến — raw SQL để tránh lỗi datetime conversion
+    // Sự kiện gần nhất mỗi chuyến
     let evMap = {}
     if (ids.length > 0) {
-      const evRaw = await sequelize.query(
-        `SELECT id_chuyen, loai_su_kien, delay_phut, thoi_gian_tao
-         FROM DieuPhoi WHERE id_chuyen IN (${ids.join(',')})
-           AND id_dieu_phoi IN (
-             SELECT MAX(id_dieu_phoi) FROM DieuPhoi
-             WHERE id_chuyen IN (${ids.join(',')}) GROUP BY id_chuyen
-           )`,
-        { type: sequelize.QueryTypes.SELECT }
-      ).catch(() => [])
-      evRaw.forEach(e => { evMap[e.id_chuyen] = e })
+      const idsStr = ids.join(',')
+      try {
+        const evRaw = await sequelize.query(
+          `EXEC sp_DP_SuKienMoiNhatTheoDanhSachChuyen @ids = :ids`,
+          { replacements: { ids: idsStr }, type: sequelize.QueryTypes.SELECT }
+        )
+        evRaw.forEach(e => { evMap[e.id_chuyen] = e })
+      } catch {
+        const evRaw = await sequelize.query(
+          `SELECT id_chuyen, loai_su_kien, delay_phut, thoi_gian_tao
+           FROM DieuPhoi WHERE id_chuyen IN (${idsStr})
+             AND id_dieu_phoi IN (
+               SELECT MAX(id_dieu_phoi) FROM DieuPhoi
+               WHERE id_chuyen IN (${idsStr}) GROUP BY id_chuyen
+             )`,
+          { type: sequelize.QueryTypes.SELECT }
+        ).catch(() => [])
+        evRaw.forEach(e => { evMap[e.id_chuyen] = e })
+      }
     }
 
     ok(res, {
@@ -303,14 +357,17 @@ const getChuyenTauDetail = async (req, res, next) => {
       order: [['thoi_gian_tao', 'DESC']],
     })
 
-    // Đếm vé theo toa — NOLOCK tránh bị block bởi transaction booking đang xử lý
+    // Đếm vé theo toa — thử proc sp_DP_ThongKeVeTheoToa, fallback raw SQL (NOLOCK tránh bị block bởi transaction booking đang xử lý)
     const veStats = await sequelize.query(
+      `EXEC sp_DP_ThongKeVeTheoToa @id_chuyen = :idChuyen`,
+      { replacements: { idChuyen: idInt }, type: sequelize.QueryTypes.SELECT }
+    ).catch(() => sequelize.query(
       `SELECT so_toa_thu_tu, COUNT(*) AS ban
        FROM Ve WITH (NOLOCK)
        WHERE id_chuyen = ${idInt} AND trang_thai NOT IN ('da_huy','da_doi')
        GROUP BY so_toa_thu_tu`,
       { type: sequelize.QueryTypes.SELECT }
-    )
+    ))
     const banByToa = Object.fromEntries(veStats.map(r => [parseInt(r.so_toa_thu_tu), parseInt(r.ban)]))
 
     // Danh sách ga dừng theo lịch trình của chuyến (để chọn "ga ảnh hưởng" khi ghi sự kiện)
@@ -385,18 +442,50 @@ const logSuKien = async (req, res, next) => {
     const { id } = req.params
     const { loaiSuKien, moTa, delayPhut, idGaAnhHuong, soToa } = req.body
     if (!loaiSuKien) return badRequest(res, 'Thiếu loại sự kiện')
-    const moTaSafe = moTa ? String(moTa).replace(/'/g, "''") : null
-    const [result] = await sequelize.query(
-      `EXEC sp_DP_GhiSuKien
-         @id_chuyen    = ${parseInt(id)},
-         @loai_su_kien = '${loaiSuKien.replace(/'/g,"''")}',
-         @mo_ta        = ${moTaSafe    ? `N'${moTaSafe}'` : 'NULL'},
-         @delay_phut   = ${delayPhut   ? parseInt(delayPhut)    : 'NULL'},
-         @id_ga        = ${idGaAnhHuong? parseInt(idGaAnhHuong) : 'NULL'},
-         @so_toa       = ${soToa       ? parseInt(soToa)         : 'NULL'},
-         @nguoi_tao    = ${req.user.id}`,
-      { type: sequelize.QueryTypes.SELECT }
-    )
+
+    const chuyenCheck = await ChuyenTau.findByPk(id, { attributes: ['id_chuyen', 'trang_thai'] })
+    if (!chuyenCheck) return notFound(res, 'Không tìm thấy chuyến tàu')
+    if (chuyenCheck.trang_thai === 'da_chay') {
+      return badRequest(res, 'Chuyến tàu đã chạy, không thể ghi nhận sự kiện điều phối')
+    }
+
+    // Thử proc sp_DP_GhiSuKien (sql_dieuphoi_procs.sql), fallback ORM nếu chưa cài
+    let result
+    try {
+      [result] = await sequelize.query(
+        `EXEC sp_DP_GhiSuKien @id_chuyen = :idChuyen, @loai_su_kien = :loaiSuKien, @mo_ta = :moTa,
+           @delay_phut = :delayPhut, @id_ga = :idGa, @so_toa = :soToa, @nguoi_tao = :nguoiTao`,
+        {
+          replacements: {
+            idChuyen:  parseInt(id),
+            loaiSuKien,
+            moTa:      moTa ? String(moTa) : null,
+            delayPhut: delayPhut ? parseInt(delayPhut) : null,
+            idGa:      idGaAnhHuong ? parseInt(idGaAnhHuong) : null,
+            soToa:     soToa ? parseInt(soToa) : null,
+            nguoiTao:  req.user.id,
+          },
+          type: sequelize.QueryTypes.SELECT,
+        }
+      )
+    } catch {
+      const chuyenExists = await ChuyenTau.findByPk(id)
+      if (!chuyenExists) {
+        result = { id_dieu_phoi: null, message: 'Không tìm thấy chuyến tàu' }
+      } else {
+        const dp = await DieuPhoi.create({
+          id_chuyen:       parseInt(id),
+          loai_su_kien:    loaiSuKien,
+          mo_ta:           moTa ? String(moTa) : null,
+          id_ga_anh_huong: idGaAnhHuong ? parseInt(idGaAnhHuong) : null,
+          delay_phut:      delayPhut ? parseInt(delayPhut) : null,
+          nguoi_tao:       req.user.id,
+          thoi_gian_tao:   new Date(),
+          trang_thai:      'hieu_luc',
+        })
+        result = { id_dieu_phoi: dp.id_dieu_phoi, message: 'Ghi nhận sự kiện thành công' }
+      }
+    }
 
     // Lấy thông tin chuyến đầy đủ để cập nhật lịch trình + soạn thông báo khách hàng
     const chuyen = await ChuyenTau.findByPk(id, {
@@ -418,34 +507,50 @@ const logSuKien = async (req, res, next) => {
       const idLichChay = chuyen.LichChay.id_lich_chay
       const idGaTarget = idGaAnhHuong ? parseInt(idGaAnhHuong) : chuyen.LichChay.id_ga_di
       const delayInt   = parseInt(delayPhut)
-      const ghiChuSql  = moTaSafe ? `, ghi_chu = N'${moTaSafe}'` : ''
-      const ghiChuIns  = moTaSafe ? `, N'${moTaSafe}'` : ', NULL'
 
       // Lấy toàn bộ ga dừng theo lịch trình, từ ga ảnh hưởng trở đi sẽ được dồn giờ theo số phút trễ
       const allStops = await LichTrinhChuyen.findAll({
         where: { id_lich_chay: idLichChay }, order: [['thu_tu_dung', 'ASC']],
       })
-      const targetStop    = allStops.find(s => s.id_ga === idGaTarget)
-      const tuThuTuDung   = targetStop?.thu_tu_dung ?? 1
-      const affectedStops = allStops.filter(s => s.thu_tu_dung >= tuThuTuDung)
+      const targetStop  = allStops.find(s => s.id_ga === idGaTarget)
+      const tuThuTuDung = targetStop?.thu_tu_dung ?? 1
 
-      if (affectedStops.length > 0) {
-        const sqlBatch = affectedStops.map(s => {
-          const gioDenDuKien = addMinutesToTime(s.gio_den, delayInt)
-          const gioDiDuKien  = addMinutesToTime(s.gio_di, delayInt)
-          return `
-            MERGE LichTrinhThucTe AS tgt
-            USING (VALUES(${parseInt(id)}, ${s.id_ga})) AS src(id_chuyen, id_ga)
-              ON tgt.id_chuyen = src.id_chuyen AND tgt.id_ga = src.id_ga
-            WHEN MATCHED THEN
-              UPDATE SET gio_den_du_kien = '${gioDenDuKien}', gio_di_du_kien = '${gioDiDuKien}',
-                         delay_den_phut = ${delayInt}, delay_di_phut = ${delayInt}, trang_thai = 'delay'${ghiChuSql}
-            WHEN NOT MATCHED THEN
-              INSERT (id_chuyen, id_ga, thu_tu_dung, gio_den_du_kien, gio_di_du_kien, delay_den_phut, delay_di_phut, trang_thai, ghi_chu)
-              VALUES (${parseInt(id)}, ${s.id_ga}, ${s.thu_tu_dung}, '${gioDenDuKien}', '${gioDiDuKien}', ${delayInt}, ${delayInt}, 'delay'${ghiChuIns});
-          `
-        }).join('\n')
-        await sequelize.query(sqlBatch).catch(() => {})
+      // Thử proc sp_DP_CapNhatLichTrinhTheoDelay (set-based MERGE), fallback MERGE từng ga
+      try {
+        await sequelize.query(
+          `EXEC sp_DP_CapNhatLichTrinhTheoDelay @id_chuyen = :idChuyen, @id_lich_chay = :idLichChay,
+             @tu_thu_tu_dung = :tuThuTuDung, @delay_phut = :delayPhut, @ghi_chu = :ghiChu`,
+          {
+            replacements: {
+              idChuyen: parseInt(id), idLichChay, tuThuTuDung, delayPhut: delayInt,
+              ghiChu: moTa ? String(moTa) : null,
+            },
+          }
+        )
+      } catch {
+        const moTaSafe = moTa ? String(moTa).replace(/'/g, "''") : null
+        const ghiChuSql = moTaSafe ? `, ghi_chu = N'${moTaSafe}'` : ''
+        const ghiChuIns = moTaSafe ? `, N'${moTaSafe}'` : ', NULL'
+        const affectedStops = allStops.filter(s => s.thu_tu_dung >= tuThuTuDung)
+
+        if (affectedStops.length > 0) {
+          const sqlBatch = affectedStops.map(s => {
+            const gioDenDuKien = addMinutesToTime(s.gio_den, delayInt)
+            const gioDiDuKien  = addMinutesToTime(s.gio_di, delayInt)
+            return `
+              MERGE LichTrinhThucTe AS tgt
+              USING (VALUES(${parseInt(id)}, ${s.id_ga})) AS src(id_chuyen, id_ga)
+                ON tgt.id_chuyen = src.id_chuyen AND tgt.id_ga = src.id_ga
+              WHEN MATCHED THEN
+                UPDATE SET gio_den_du_kien = '${gioDenDuKien}', gio_di_du_kien = '${gioDiDuKien}',
+                           delay_den_phut = ${delayInt}, delay_di_phut = ${delayInt}, trang_thai = 'delay'${ghiChuSql}
+              WHEN NOT MATCHED THEN
+                INSERT (id_chuyen, id_ga, thu_tu_dung, gio_den_du_kien, gio_di_du_kien, delay_den_phut, delay_di_phut, trang_thai, ghi_chu)
+                VALUES (${parseInt(id)}, ${s.id_ga}, ${s.thu_tu_dung}, '${gioDenDuKien}', '${gioDiDuKien}', ${delayInt}, ${delayInt}, 'delay'${ghiChuIns});
+            `
+          }).join('\n')
+          await sequelize.query(sqlBatch).catch(() => {})
+        }
       }
       // Chuyển trạng thái chuyến thành 'dieu_chinh'
       await ChuyenTau.update({ trang_thai: 'dieu_chinh' }, { where: { id_chuyen: id } }).catch(() => {})
@@ -510,37 +615,44 @@ const addToaChuyen = async (req, res, next) => {
       trang_thai:    'hoat_dong',
     })
 
-    // ── Tạo GheChuyen trực tiếp (không phụ thuộc SP) ─────────────────
-    // 1. Lấy tất cả ToaChuyen của chuyến (bao gồm toa vừa thêm + toa gốc vừa migrate)
-    const allToaList = await ToaChuyen.findAll({ where: { id_chuyen: parseInt(id) } })
-
-    // Với mỗi toa, tạo GheChuyen nếu chưa có
-    for (const toa of allToaList) {
-      const ghes = await CauHinhGhe.findAll({ where: { id_loai_toa: toa.id_loai_toa } })
-      if (ghes.length === 0) continue
-
-      // Lấy GheChuyen đã có của toa này để tránh duplicate
-      const existingGheNums = await sequelize.query(
-        `SELECT so_ghe_trong_toa FROM GheChuyen WHERE id_chuyen=${parseInt(id)} AND so_toa_thu_tu=${toa.so_toa_thu_tu}`,
-        { type: sequelize.QueryTypes.SELECT }
+    // ── Đồng bộ GheChuyen cho tất cả toa của chuyến (bao gồm toa vừa thêm + toa gốc vừa migrate) ──
+    // Thử proc sp_DP_DongBoGheChuyen, fallback tạo từng toa nếu chưa cài
+    try {
+      await sequelize.query(
+        `EXEC sp_DP_DongBoGheChuyen @id_chuyen = :idChuyen`,
+        { replacements: { idChuyen: parseInt(id) } }
       )
-      const existingSet = new Set(existingGheNums.map(g => g.so_ghe_trong_toa))
+    } catch {
+      const allToaList = await ToaChuyen.findAll({ where: { id_chuyen: parseInt(id) } })
 
-      const toCreate = ghes
-        .filter(g => !existingSet.has(g.so_ghe_trong_toa))
-        .map(g => ({
-          id_chuyen:        parseInt(id),
-          so_toa_thu_tu:    toa.so_toa_thu_tu,
-          so_ghe_trong_toa: g.so_ghe_trong_toa,
-          id_loai_ghe:      g.id_loai_ghe,
-        }))
+      // Với mỗi toa, tạo GheChuyen nếu chưa có
+      for (const toa of allToaList) {
+        const ghes = await CauHinhGhe.findAll({ where: { id_loai_toa: toa.id_loai_toa } })
+        if (ghes.length === 0) continue
 
-      if (toCreate.length > 0) {
-        await sequelize.query(
-          `INSERT INTO GheChuyen(id_chuyen,so_toa_thu_tu,so_ghe_trong_toa,id_loai_ghe) VALUES ${
-            toCreate.map(r => `(${r.id_chuyen},${r.so_toa_thu_tu},${r.so_ghe_trong_toa},${r.id_loai_ghe})`).join(',')
-          }`
+        // Lấy GheChuyen đã có của toa này để tránh duplicate
+        const existingGheNums = await sequelize.query(
+          `SELECT so_ghe_trong_toa FROM GheChuyen WHERE id_chuyen=${parseInt(id)} AND so_toa_thu_tu=${toa.so_toa_thu_tu}`,
+          { type: sequelize.QueryTypes.SELECT }
         )
+        const existingSet = new Set(existingGheNums.map(g => g.so_ghe_trong_toa))
+
+        const toCreate = ghes
+          .filter(g => !existingSet.has(g.so_ghe_trong_toa))
+          .map(g => ({
+            id_chuyen:        parseInt(id),
+            so_toa_thu_tu:    toa.so_toa_thu_tu,
+            so_ghe_trong_toa: g.so_ghe_trong_toa,
+            id_loai_ghe:      g.id_loai_ghe,
+          }))
+
+        if (toCreate.length > 0) {
+          await sequelize.query(
+            `INSERT INTO GheChuyen(id_chuyen,so_toa_thu_tu,so_ghe_trong_toa,id_loai_ghe) VALUES ${
+              toCreate.map(r => `(${r.id_chuyen},${r.so_toa_thu_tu},${r.so_ghe_trong_toa},${r.id_loai_ghe})`).join(',')
+            }`
+          )
+        }
       }
     }
 
@@ -564,11 +676,14 @@ const updateToaChuyen = async (req, res, next) => {
 
     if (!tc) return notFound(res, 'Không tìm thấy toa — vui lòng tải lại trang và thử lại')
 
-    // Dùng NOLOCK để tránh timeout khi Ve table đang bị lock bởi transaction booking
+    // Thử proc sp_DP_DemVeTheoToa, fallback raw SQL (NOLOCK tránh timeout khi Ve table đang bị lock bởi transaction booking)
     const [veCheck] = await sequelize.query(
+      `EXEC sp_DP_DemVeTheoToa @id_chuyen = :idChuyen, @so_toa_thu_tu = :soToa`,
+      { replacements: { idChuyen: tc.id_chuyen, soToa: tc.so_toa_thu_tu }, type: sequelize.QueryTypes.SELECT }
+    ).catch(() => sequelize.query(
       `SELECT COUNT(*) AS cnt FROM Ve WITH (NOLOCK) WHERE id_chuyen=${tc.id_chuyen} AND so_toa_thu_tu=${tc.so_toa_thu_tu} AND trang_thai NOT IN ('da_huy','da_doi')`,
       { type: sequelize.QueryTypes.SELECT }
-    )
+    ))
     if (parseInt(veCheck?.cnt) > 0)
       return badRequest(res, `Không thể chỉnh sửa toa ${tc.so_toa_thu_tu} — đã có ${veCheck.cnt} vé đặt. Chỉ điều chỉnh toa ngay khi sinh chuyến (trước khi có vé).`)
 
@@ -585,19 +700,31 @@ const updateToaChuyen = async (req, res, next) => {
         // bước 2: dup → oldSoToa (số cũ của tc, vừa được giải phóng)
         // bước 3: tc → newSoToa (số cũ của dup, vừa được giải phóng)
         const [veCheckDup] = await sequelize.query(
+          `EXEC sp_DP_DemVeTheoToa @id_chuyen = :idChuyen, @so_toa_thu_tu = :soToa`,
+          { replacements: { idChuyen: tc.id_chuyen, soToa: dup.so_toa_thu_tu }, type: sequelize.QueryTypes.SELECT }
+        ).catch(() => sequelize.query(
           `SELECT COUNT(*) AS cnt FROM Ve WITH (NOLOCK)
            WHERE id_chuyen=${tc.id_chuyen} AND so_toa_thu_tu=${dup.so_toa_thu_tu}
              AND trang_thai NOT IN ('da_huy','da_doi')`,
           { type: sequelize.QueryTypes.SELECT }
-        )
+        ))
         if (parseInt(veCheckDup?.cnt) > 0)
           return badRequest(res, `Không thể hoán đổi — toa ${dup.so_toa_thu_tu} đã có ${veCheckDup.cnt} vé đặt`)
 
-        await sequelize.transaction(async (t) => {
-          await sequelize.query(`UPDATE ToaChuyen SET so_toa_thu_tu = -1    WHERE id_toa_chuyen = ${tc.id_toa_chuyen}`,  { transaction: t })
-          await sequelize.query(`UPDATE ToaChuyen SET so_toa_thu_tu = ${oldSoToa} WHERE id_toa_chuyen = ${dup.id_toa_chuyen}`, { transaction: t })
-          await sequelize.query(`UPDATE ToaChuyen SET so_toa_thu_tu = ${newSoToa} WHERE id_toa_chuyen = ${tc.id_toa_chuyen}`,  { transaction: t })
-        })
+        // Thử proc sp_DP_HoanDoiToa, fallback 3 UPDATE trong transaction nếu chưa cài
+        try {
+          await sequelize.query(
+            `EXEC sp_DP_HoanDoiToa @id_toa_chuyen_1 = :idToaChuyen1, @so_toa_cu_1 = :soToaCu1,
+               @id_toa_chuyen_2 = :idToaChuyen2, @so_toa_cu_2 = :soToaCu2`,
+            { replacements: { idToaChuyen1: tc.id_toa_chuyen, soToaCu1: oldSoToa, idToaChuyen2: dup.id_toa_chuyen, soToaCu2: newSoToa } }
+          )
+        } catch {
+          await sequelize.transaction(async (t) => {
+            await sequelize.query(`UPDATE ToaChuyen SET so_toa_thu_tu = -1    WHERE id_toa_chuyen = ${tc.id_toa_chuyen}`,  { transaction: t })
+            await sequelize.query(`UPDATE ToaChuyen SET so_toa_thu_tu = ${oldSoToa} WHERE id_toa_chuyen = ${dup.id_toa_chuyen}`, { transaction: t })
+            await sequelize.query(`UPDATE ToaChuyen SET so_toa_thu_tu = ${newSoToa} WHERE id_toa_chuyen = ${tc.id_toa_chuyen}`,  { transaction: t })
+          })
+        }
         return ok(res, { swapped: true, toa1: oldSoToa, toa2: newSoToa }, `Hoán đổi thứ tự toa ${oldSoToa} ↔ ${newSoToa} thành công`)
       }
     }
@@ -613,9 +740,12 @@ const removeToaChuyen = async (req, res, next) => {
     const tc = await ToaChuyen.findByPk(toaId)
     if (!tc) return notFound(res, 'Không tìm thấy toa')
     const [veCheck] = await sequelize.query(
+      `EXEC sp_DP_DemVeTheoToa @id_chuyen = :idChuyen, @so_toa_thu_tu = :soToa`,
+      { replacements: { idChuyen: tc.id_chuyen, soToa: tc.so_toa_thu_tu }, type: sequelize.QueryTypes.SELECT }
+    ).catch(() => sequelize.query(
       `SELECT COUNT(*) AS cnt FROM Ve WITH (NOLOCK) WHERE id_chuyen=${tc.id_chuyen} AND so_toa_thu_tu=${tc.so_toa_thu_tu} AND trang_thai NOT IN ('da_huy','da_doi')`,
       { type: sequelize.QueryTypes.SELECT }
-    )
+    ))
     if (parseInt(veCheck?.cnt) > 0) return badRequest(res, `Không thể xóa toa ${tc.so_toa_thu_tu} vì đã có ${veCheck.cnt} vé đặt`)
     await tc.destroy()
     ok(res, null, 'Xóa toa thành công')
@@ -629,9 +759,12 @@ const reorderToa = async (req, res, next) => {
     if (!Array.isArray(order) || order.length === 0) return badRequest(res, 'Danh sách sắp xếp không được rỗng')
     // Không cho phép sắp xếp lại khi chuyến đã có vé đặt
     const [veCheck] = await sequelize.query(
+      `EXEC sp_DP_DemVeTheoChuyen @id_chuyen = :idChuyen`,
+      { replacements: { idChuyen: parseInt(id) }, type: sequelize.QueryTypes.SELECT }
+    ).catch(() => sequelize.query(
       `SELECT COUNT(*) AS cnt FROM Ve WITH (NOLOCK) WHERE id_chuyen=${parseInt(id)} AND trang_thai NOT IN ('da_huy','da_doi')`,
       { type: sequelize.QueryTypes.SELECT }
-    )
+    ))
     if (parseInt(veCheck?.cnt) > 0)
       return badRequest(res, `Không thể sắp xếp lại toa — chuyến đã có ${veCheck.cnt} vé đặt. Chỉ điều chỉnh toa ngay khi sinh chuyến.`)
     await sequelize.transaction(async (t) => {

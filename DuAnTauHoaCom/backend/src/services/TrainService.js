@@ -114,9 +114,24 @@ const searchTrains = async (tenGaDi, tenGaDen, ngayChay) => {
     // Danh sách toa
     const coaches = await TrainRepo.getCoachesByChuyen(ct.id_chuyen)
 
-    // Giá tham khảo
+    // Giá tham khảo = giá thấp nhất trong các loại ghế của chuyến
+    const loaiGheMap = {}
+    for (const c of coaches) {
+      for (const lg of (c.LoaiToa?.LoaiGhes || [])) {
+        if (!loaiGheMap[lg.id_loai_ghe]) loaiGheMap[lg.id_loai_ghe] = lg
+      }
+    }
+
     let priceFrom = null
-    if (coaches.length > 0) {
+    if (Object.keys(loaiGheMap).length > 0) {
+      const prices = await Promise.all(
+        Object.values(loaiGheMap).map(lg =>
+          tinhGiaVe(idLichChay, ct.ngay_chay, gaDi.id_ga, gaDen.id_ga, lg.id_loai_ghe, parseFloat(lg.he_so_gia) || 1)
+        )
+      )
+      const validPrices = prices.filter(p => p > 0)
+      if (validPrices.length > 0) priceFrom = Math.min(...validPrices)
+    } else if (coaches.length > 0) {
       priceFrom = await tinhGiaVe(idLichChay, ct.ngay_chay, gaDi.id_ga, gaDen.id_ga, null, 1.0)
     }
 
@@ -312,7 +327,7 @@ const getTrainRouteDetail = async (idLichChay, idGaLen, idGaXuong, ngayChay) => 
         model: Tau,
         include: [{
           model: CauHinhToa,
-          include: [{ model: LoaiToa, include: [{ model: LoaiGhe, where: { trang_thai: 'hoat_dong' }, required: false }] }],
+          include: [{ model: LoaiToa, include: [{ model: LoaiGhe, where: { trang_thai: 'dang_ban' }, required: false }] }],
         }],
       },
       { model: GaTau, as: 'GaDi',  attributes: ['id_ga', 'ten_ga'] },
@@ -341,6 +356,12 @@ const getTrainRouteDetail = async (idLichChay, idGaLen, idGaXuong, ngayChay) => 
     priceRows = rawPrices.filter(p => p.gia > 0).map((p, idx) => ({ stt: idx + 1, ...p }))
   }
 
+  // Thời gian thực tế (offset-aware) — đồng bộ với searchTrains
+  let timing = null
+  if (idGaLen && idGaXuong && ngayChay) {
+    timing = await calcActualTime(idLichChay, ngayChay, idGaLen, idGaXuong, lichChay.gio_khoi_hanh)
+  }
+
   return {
     idLichChay,
     maTau:        lichChay.Tau?.so_hieu,
@@ -349,6 +370,9 @@ const getTrainRouteDetail = async (idLichChay, idGaLen, idGaXuong, ngayChay) => 
     gaDen:        lichChay.GaDen?.ten_ga,
     gioKhoiHanh:  lichChay.gio_khoi_hanh,
     gioDuKienDen: lichChay.gio_du_kien_den,
+    departureISO: timing?.departDate   || null,
+    arrivalISO:   timing?.arrivalDate  || null,
+    durationPhut: timing?.durationPhut || null,
     stops: stops.map((s, idx) => ({
       stt:        idx + 1,
       tenGa:      s.GaTau?.ten_ga,

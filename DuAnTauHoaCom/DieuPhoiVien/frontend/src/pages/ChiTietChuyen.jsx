@@ -51,7 +51,7 @@ const FormField = ({ label, children }) => (
   </div>
 )
 
-const inputCls = "w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-[#8C1D19] outline-none"
+const inputCls = "w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-[#8C1D19] focus:ring-0 outline-none"
 
 const seatColor = (avail, total) => {
   if (avail <= 0) return 'text-red-500'
@@ -114,6 +114,8 @@ export default function ChiTietChuyen() {
 
   // Chuyến đã có vé đặt hoặc đã chạy → không cho điều chỉnh cấu hình toa
   const toaReadOnly = (data.tongVeBan || 0) > 0 || data.trangThai === 'da_chay' || data.trangThai === 'huy'
+  // Chuyến đã chạy → không thể ghi nhận thêm sự kiện điều phối
+  const daChay = data.trangThai === 'da_chay'
 
   return (
     <div className="p-6 space-y-5">
@@ -140,7 +142,9 @@ export default function ChiTietChuyen() {
             {data.ghiChu && <p className="text-xs text-orange-600 mt-1 bg-orange-50 px-2 py-1 rounded-lg w-fit">{data.ghiChu}</p>}
           </div>
           <div className="flex gap-2 flex-wrap">
-            <button onClick={openEvent} className="flex items-center gap-1.5 bg-orange-500 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-orange-600">
+            <button onClick={openEvent} disabled={daChay}
+              title={daChay ? 'Chuyến đã chạy — không thể ghi nhận sự kiện' : undefined}
+              className="flex items-center gap-1.5 bg-orange-500 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-orange-500">
               <FiClipboard /> Ghi sự kiện
             </button>
           </div>
@@ -197,7 +201,7 @@ export default function ChiTietChuyen() {
             ) : (
               <div className="flex justify-between items-center mb-4">
                 <p className="text-sm text-gray-500">Mỗi thẻ là một toa trong chuyến. Xóa chỉ khi chưa có vé đặt.</p>
-                <button onClick={openAddToa} className="flex items-center gap-1.5 bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-green-700">
+                <button onClick={openAddToa} className="flex items-center gap-1.5 bg-[#8C1D19] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-green-700">
                   <FiPlus /> Thêm toa
                 </button>
               </div>

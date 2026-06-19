@@ -8,6 +8,14 @@ import { createPayment, confirmPayment, getPaymentStatus } from '../../api/payme
 
 const formatPrice = (price) => new Intl.NumberFormat('vi-VN').format(price) + ' đ'
 
+const METHOD_LABELS = {
+  qr:     'Chuyển khoản QR',
+  credit: 'Thẻ tín dụng',
+  momo:   'Ví MoMo',
+  atm:    'Thẻ ATM nội địa',
+}
+const SIMULATED_METHODS = ['credit', 'momo', 'atm']
+
 const QRPayment = () => {
   const { state } = useLocation()
   const navigate = useNavigate()
@@ -18,12 +26,13 @@ const QRPayment = () => {
   const bookingData = state || {}
   const trips       = bookingData.trips
   const isRoundTrip = bookingData.tripType === 'round-trip' && trips?.length === 2
-  const totalAmount = bookingData.totalAmount || 0
   const orderCode   = bookingData.orderCode   // maDon từ API
   const bookingCode = bookingData.bookingCode || orderCode
   const idDon       = bookingData.idDon
   const passengers  = bookingData.passengersInfo || []
   const contactInfo = bookingData.contactInfo || {}
+  const phuongThuc  = bookingData.phuongThuc || 'qr'
+  const isSimulated = SIMULATED_METHODS.includes(phuongThuc)
 
   // Tính thời gian còn lại từ hetHan (DB) nếu có; fallback 15 phút cho đặt mới
   const hetHanMs = bookingData.hetHan ? new Date(bookingData.hetHan).getTime() : null
@@ -38,6 +47,7 @@ const QRPayment = () => {
   const [isExpired, setIsExpired]     = useState(() => hetHanMs ? hetHanMs <= Date.now() : false)
   const [idThanhToan, setIdThanhToan] = useState(null)
   const [qrUrlFromApi, setQrUrlFromApi] = useState(null)
+  const [totalAmount, setTotalAmount] = useState(bookingData.totalAmount || 0)
   const [paymentError, setPaymentError] = useState(null)
   const [confirmError, setConfirmError] = useState(null)
 
@@ -54,11 +64,12 @@ const QRPayment = () => {
     }
     if (!idDon || paymentCreatedRef.current) return
     paymentCreatedRef.current = true
-    createPayment(idDon, 'the_ngan_hang')
+    createPayment(idDon, phuongThuc)
       .then(res => {
         const d = res.data || res
         setIdThanhToan(d.idThanhToan)
         setQrUrlFromApi(d.qrUrl)
+        if (d.soTien) setTotalAmount(d.soTien)
       })
       .catch(err => setPaymentError(err.message || 'Không tạo được giao dịch thanh toán'))
   }, [idDon])
@@ -83,7 +94,7 @@ const QRPayment = () => {
   // Auto-polling: kiểm tra trạng thái thanh toán mỗi 3 giây
   // Khi ngân hàng/SePay gọi webhook xác nhận → trang tự chuyển sang thành công
   useEffect(() => {
-    if (!idThanhToan || isExpired) return
+    if (!idThanhToan || isExpired || isSimulated) return
     pollRef.current = setInterval(async () => {
       try {
         const res = await getPaymentStatus(idThanhToan)
@@ -277,46 +288,64 @@ const QRPayment = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
-          {/* Cột trái: QR + thông tin chuyển khoản */}
+          {/* Cột trái: QR + thông tin chuyển khoản (hoặc cổng thanh toán mô phỏng) */}
           <div className="space-y-4">
 
-            {/* QR Code VietQR */}
-            <div className="bg-white rounded-lg shadow p-5 text-center">
-              <p className="font-bold text-gray-800 mb-3">Quét mã QR để thanh toán</p>
-              <div className="flex justify-center">
-                <img
-                  src={qrUrl}
-                  alt="QR thanh toán"
-                  className="w-52 h-52 object-contain border rounded-lg"
-                  onError={(e) => { e.target.style.display = 'none' }}
-                />
+            {isSimulated ? (
+              /* Cổng thanh toán mô phỏng (chưa tích hợp cổng thật) */
+              <div className="bg-white rounded-lg shadow p-6 text-center">
+                <p className="font-bold text-gray-800 mb-2">Thanh toán qua {METHOD_LABELS[phuongThuc]}</p>
+                <div className="bg-gray-50 border border-dashed border-gray-300 rounded-lg p-4 my-3">
+                  <p className="text-sm text-gray-500">
+                    Phương thức <strong>{METHOD_LABELS[phuongThuc]}</strong> hiện được mô phỏng — hệ thống chưa kết nối cổng thanh toán thật.
+                  </p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Nhấn <strong>"Xác nhận thanh toán"</strong> ở cột bên phải để mô phỏng giao dịch thành công.
+                  </p>
+                </div>
+                <p className="text-xs text-gray-400">Mã đơn: {orderCode}</p>
               </div>
-              <p className="text-xs text-gray-500 mt-2">Dùng ứng dụng ngân hàng hoặc VietQR để quét</p>
-              <p className="text-xs text-orange-500 mt-1 font-medium">Nhập đúng nội dung <strong>{orderCode}</strong> khi chuyển khoản</p>
-            </div>
-
-            {/* Thông tin chuyển khoản */}
-            <div className="bg-white rounded-lg shadow p-5">
-              <h2 className="font-bold text-gray-800 mb-3">Thông tin chuyển khoản thủ công</h2>
-              <div className="space-y-2">
-                {bankInfo.map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-center border-b last:border-b-0 py-2">
-                    <div>
-                      <div className="text-xs text-gray-500">{item.label}</div>
-                      <div className="font-medium text-sm">{item.value}</div>
-                    </div>
-                    {item.copy && (
-                      <button onClick={() => copyText(item.value, item.label)} className="text-[#ff8a00] p-1">
-                        {copied === item.label ? <FaCheck className="text-green-500" /> : <FaCopy />}
-                      </button>
-                    )}
+            ) : (
+              <>
+                {/* QR Code VietQR */}
+                <div className="bg-white rounded-lg shadow p-5 text-center">
+                  <p className="font-bold text-gray-800 mb-3">Quét mã QR để thanh toán</p>
+                  <div className="flex justify-center">
+                    <img
+                      src={qrUrl}
+                      alt="QR thanh toán"
+                      className="w-52 h-52 object-contain border rounded-lg"
+                      onError={(e) => { e.target.style.display = 'none' }}
+                    />
                   </div>
-                ))}
-              </div>
-              <div className="mt-3 p-2 bg-yellow-50 rounded text-xs text-yellow-700">
-                * Chuyển đúng số tiền và nội dung để hệ thống tự động xác nhận vé
-              </div>
-            </div>
+                  <p className="text-xs text-gray-500 mt-2">Dùng ứng dụng ngân hàng hoặc VietQR để quét</p>
+                  <p className="text-xs text-orange-500 mt-1 font-medium">Nhập đúng nội dung <strong>{orderCode}</strong> khi chuyển khoản</p>
+                </div>
+
+                {/* Thông tin chuyển khoản */}
+                <div className="bg-white rounded-lg shadow p-5">
+                  <h2 className="font-bold text-gray-800 mb-3">Thông tin chuyển khoản thủ công</h2>
+                  <div className="space-y-2">
+                    {bankInfo.map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-center border-b last:border-b-0 py-2">
+                        <div>
+                          <div className="text-xs text-gray-500">{item.label}</div>
+                          <div className="font-medium text-sm">{item.value}</div>
+                        </div>
+                        {item.copy && (
+                          <button onClick={() => copyText(item.value, item.label)} className="text-[#ff8a00] p-1">
+                            {copied === item.label ? <FaCheck className="text-green-500" /> : <FaCopy />}
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 p-2 bg-yellow-50 rounded text-xs text-yellow-700">
+                    * Chuyển đúng số tiền và nội dung để hệ thống tự động xác nhận vé
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Cột phải: Tổng tiền + xác nhận + thông tin chuyến */}
@@ -328,8 +357,8 @@ const QRPayment = () => {
                 <p className="text-gray-500 text-sm">Tổng thanh toán</p>
                 <p className="text-3xl font-bold text-[#ff8a00]">{formatPrice(totalAmount)}</p>
               </div>
-              {/* Thông báo hệ thống đang tự động kiểm tra */}
-              {idThanhToan && !isExpired && !isProcessing && (
+              {/* Thông báo hệ thống đang tự động kiểm tra (chỉ áp dụng cho QR/chuyển khoản) */}
+              {!isSimulated && idThanhToan && !isExpired && !isProcessing && (
                 <div className="flex items-center justify-center gap-2 text-xs text-green-600 bg-green-50 rounded-lg py-2 mb-2">
                   <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                   Đang tự động kiểm tra thanh toán...
@@ -346,10 +375,10 @@ const QRPayment = () => {
                     : 'bg-[#ff8a00] text-white hover:bg-[#e07a00] shadow-md'
                 }`}
               >
-                {isProcessing ? 'Đang xử lý...' : isExpired ? 'Đã hết hạn' : !idThanhToan ? 'Đang khởi tạo...' : '✓ Xác nhận thủ công'}
+                {isProcessing ? 'Đang xử lý...' : isExpired ? 'Đã hết hạn' : !idThanhToan ? 'Đang khởi tạo...' : isSimulated ? '✓ Xác nhận thanh toán' : '✓ Xác nhận thủ công'}
               </button>
               <p className="text-xs text-gray-400 text-center mt-2">
-                Nhấn nếu hệ thống chưa tự xác nhận sau khi chuyển khoản
+                {isSimulated ? 'Mô phỏng giao dịch thành công qua ' + METHOD_LABELS[phuongThuc] : 'Nhấn nếu hệ thống chưa tự xác nhận sau khi chuyển khoản'}
               </p>
               {confirmError && (
                 <p className="text-red-600 text-xs text-center mt-2 bg-red-50 rounded p-2">{confirmError}</p>

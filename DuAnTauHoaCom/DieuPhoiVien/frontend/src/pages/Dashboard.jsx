@@ -88,7 +88,7 @@ export default function Dashboard() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card icon={FaTrain}      label="Tổng chuyến hôm nay" value={today.total || 0} color="border-[#8C1D19]" sub="tất cả trạng thái" />
-        <Card icon={FiCheckCircle} label="Đang dừng giờ"   value={s.dung_gio || 0}  color="border-green-500"  sub="sẵn sàng khởi hành" />
+        <Card icon={FiCheckCircle} label="Đang đúng giờ"   value={s.dung_gio || 0}  color="border-green-500"  sub="sẵn sàng khởi hành" />
         <Card icon={FiAlertTriangle} label="Cần chú ý"       value={(s.dieu_chinh||0)+(s.sap_den||0)} color="border-orange-500" sub="chậm / điều chỉnh" />
         <Card icon={FiXCircle}    label="Đã hủy hôm nay"  value={s.huy || 0}       color="border-red-500"   sub={`${data.tomorrowCount || 0} chuyến ngày mai`} />
       </div>

@@ -3,7 +3,7 @@ import { FiUser, FiSave, FiCheckCircle, FiXCircle, FiLoader, FiLock } from 'reac
 import { getProfile, updateProfile, changePassword } from '../api/dieuphoi'
 import { getAuth, saveAuth } from '../utils/auth'
 
-const inputCls = "w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-[#8C1D19] outline-none"
+const inputCls = "w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-[#8C1D19] focus:ring-0 outline-none"
 const inputDisabledCls = "w-full border-2 border-gray-100 bg-gray-50 rounded-xl px-3 py-2.5 text-sm text-gray-500 cursor-not-allowed"
 
 const FormField = ({ label, required, children }) => (

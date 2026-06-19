@@ -88,7 +88,7 @@ const TrainsManagement = () => {
     setFormData({
       so_hieu: '',
       ten_tau: '',
-      so_toa: '',
+      
       trang_thai: 'hoat_dong'
     });
   };
@@ -123,7 +123,7 @@ const TrainsManagement = () => {
     setFormData({
       so_hieu: train.so_hieu,
       ten_tau: train.ten_tau || '',
-      so_toa: train.so_toa,
+    
       trang_thai: train.trang_thai
     });
     setShowAddModal(true);
@@ -156,8 +156,7 @@ const TrainsManagement = () => {
   const columns = [
     { title: 'Số hiệu', key: 'so_hieu', width: '90px' },
     { title: 'Tên tàu', key: 'ten_tau', width: '240px' },
-    { title: 'Số toa', key: 'so_toa', width: '130px' },
-    { title: 'Số toa thực tế', key: 'so_toa_thuc_te', width: '140px' },
+  
     { 
       title: 'Trạng thái', 
       key: 'trang_thai',
@@ -249,18 +248,7 @@ const TrainsManagement = () => {
             />
           </div>
           
-          <div className="form-group">
-            <label>Số toa *</label>
-            <input 
-              type="number" 
-              name="so_toa"
-              value={formData.so_toa}
-              onChange={handleInputChange}
-              min="1" 
-              max="20" 
-              required 
-            />
-          </div>
+         
           
           <div className="form-group">
             <label>Trạng thái</label>
@@ -300,14 +288,7 @@ const TrainsManagement = () => {
                 <span className="label">Tên tàu:</span>
                 <span className="value">{selectedTrain.ten_tau || '---'}</span>
               </div>
-              <div className="detail-row">
-                <span className="label">Số toa:</span>
-                <span className="value">{selectedTrain.so_toa}</span>
-              </div>
-              <div className="detail-row">
-                <span className="label">Số toa thực tế:</span>
-                <span className="value">{selectedTrain.so_toa_thuc_te || 0}</span>
-              </div>
+              
               <div className="detail-row">
                 <span className="label">Trạng thái:</span>
                 <span className="value">

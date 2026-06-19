@@ -78,7 +78,7 @@ const CancelSearch = ({ onFound, onError }) => {
         <FaTicket className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
         <input type="text" name="bookingCode" value={form.bookingCode}
           onChange={handleChange} placeholder="Mã đặt chỗ (6 ký tự)"
-          style={{ textTransform: 'uppercase' }}
+       
           className={inputCls('bookingCode')} />
         {errors.bookingCode && <p className="text-red-600 text-xs mt-1 ml-1">{errors.bookingCode}</p>}
       </div>
@@ -117,15 +117,15 @@ const CancelSearch = ({ onFound, onError }) => {
       <div className="rounded-md bg-amber-50/80 border border-amber-300 p-3 text-xs text-amber-800">
         <p className="font-semibold mb-1">Chính sách hủy vé (theo ĐSVN):</p>
         <ul className="space-y-0.5">
-          <li>• Trước ≥ 3 ngày: <strong>hoàn 90%</strong></li>
-          <li>• Trước 1–3 ngày: <strong>hoàn 75%</strong></li>
-          <li>• Trước 4 giờ – 1 ngày: <strong>hoàn 50%</strong></li>
-          <li>• Dưới 4 giờ / sau khởi hành: <strong>không hoàn</strong></li>
+          <li>Từ 24h trở lên: <strong>hoàn 90% </strong>giá vé</li>
+          <li>Từ 4h đến 24h: <strong>hoàn 80% </strong>giá vé</li>
+       
+          <li>Dưới 4h: <strong>không </strong>được phép trả vé</li>
         </ul>
       </div>
 
-      <div className="mt-3 border-t border-amber-300/40 pt-2 text-center">
-        <p className="text-[#8C1D19] text-xs">THE KLN TRAIN — #Hành trình trở về</p>
+      <div className="mt-2 border-t border-amber-300/40 pt-2 text-center">
+        <p className="text-[#8C1D19] text-xs">THE KLN TRAIN - #Hành trình trở về</p>
       </div>
     </form>
   )

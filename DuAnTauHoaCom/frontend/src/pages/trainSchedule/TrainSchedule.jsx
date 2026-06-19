@@ -30,6 +30,31 @@ const computeDuration = (start, end) => {
   return `${h} giờ${m > 0 ? ` ${m} phút` : ''}`
 }
 
+// Số phút → "X giờ Y phút"
+const formatDurationPhut = (mins) => {
+  const h = Math.floor(mins / 60)
+  const m = mins % 60
+  return `${h} giờ${m > 0 ? ` ${m} phút` : ''}`
+}
+
+// Parse ISO datetime → "HH:MM" theo múi giờ Việt Nam
+const isoToHHMM = (iso) => {
+  if (!iso) return ''
+  try {
+    return new Date(iso).toLocaleTimeString('vi-VN', {
+      hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Ho_Chi_Minh', hour12: false,
+    })
+  } catch { return '' }
+}
+
+// Parse ISO datetime → "YYYY-MM-DD" theo múi giờ Việt Nam
+const isoToDate = (iso) => {
+  if (!iso) return ''
+  try {
+    return new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' })
+  } catch { return '' }
+}
+
 const TrainSchedule = () => {
   const [step, setStep]               = useState('search')
   const [searchParams, setSearchParams] = useState(null)
@@ -43,21 +68,25 @@ const TrainSchedule = () => {
     setError(null)
     try {
       const data = await searchTrainsApi(params.fromStation, params.toStation, params.date)
-      const list = (Array.isArray(data) ? data : data?.data || []).map(ct => ({
-        idChuyen:   ct.idChuyen,
-        idLichChay: ct.idLichChay,
-        gaDi:       ct.gaDi,
-        gaDen:      ct.gaDen,
-        code:       ct.maTau,
-        name:       ct.tenTau,
-        fromStation: ct.gaDi?.ten,
-        toStation:   ct.gaDen?.ten,
-        departTime:  toHHMM(ct.gioKhoiHanh),
-        arriveTime:  toHHMM(ct.gioDuKienDen),
-        duration:    computeDuration(ct.gioKhoiHanh, ct.gioDuKienDen),
-        departDate:  params.date,
-        arriveDate:  params.date,
-      }))
+      const list = (Array.isArray(data) ? data : data?.data || []).map(ct => {
+        const departTime = ct.departureISO ? isoToHHMM(ct.departureISO) : toHHMM(ct.gioKhoiHanh)
+        const arriveTime = ct.arrivalISO   ? isoToHHMM(ct.arrivalISO)   : toHHMM(ct.gioDuKienDen)
+        return {
+          idChuyen:   ct.idChuyen,
+          idLichChay: ct.idLichChay,
+          gaDi:       ct.gaDi,
+          gaDen:      ct.gaDen,
+          code:       ct.maTau,
+          name:       ct.tenTau,
+          fromStation: ct.gaDi?.ten,
+          toStation:   ct.gaDen?.ten,
+          departTime,
+          arriveTime,
+          duration:    ct.durationPhut != null ? formatDurationPhut(ct.durationPhut) : computeDuration(ct.gioKhoiHanh, ct.gioDuKienDen),
+          departDate:  ct.departureISO ? isoToDate(ct.departureISO) : params.date,
+          arriveDate:  ct.arrivalISO   ? isoToDate(ct.arrivalISO)   : params.date,
+        }
+      })
       setSearchParams(params)
       setTrains(list)
       setStep('list')
@@ -81,16 +110,18 @@ const TrainSchedule = () => {
         searchParams?.date
       )
       const detail = data?.data || data
+      const departTime = detail.departureISO ? isoToHHMM(detail.departureISO) : toHHMM(detail.gioKhoiHanh)
+      const arriveTime = detail.arrivalISO   ? isoToHHMM(detail.arrivalISO)   : toHHMM(detail.gioDuKienDen)
       setTrainDetail({
         code:        detail.maTau,
         name:        detail.tenTau,
         fromStation: detail.gaDi,
         toStation:   detail.gaDen,
-        departTime:  toHHMM(detail.gioKhoiHanh),
-        arriveTime:  toHHMM(detail.gioDuKienDen),
-        departDate:  searchParams?.date,
-        arriveDate:  searchParams?.date,
-        duration:    computeDuration(detail.gioKhoiHanh, detail.gioDuKienDen),
+        departTime,
+        arriveTime,
+        departDate:  detail.departureISO ? isoToDate(detail.departureISO) : searchParams?.date,
+        arriveDate:  detail.arrivalISO   ? isoToDate(detail.arrivalISO)   : searchParams?.date,
+        duration:    detail.durationPhut != null ? formatDurationPhut(detail.durationPhut) : computeDuration(detail.gioKhoiHanh, detail.gioDuKienDen),
         stations: (detail.stops || []).map(s => ({
           stt:        s.stt,
           name:       s.tenGa,

@@ -19,6 +19,10 @@ const mapGateway = (pt) => {
   return map[pt] || null
 }
 
+// Phí phụ thu theo phương thức thanh toán (đồng bộ với frontend PaymentMethod.jsx)
+const PHI_PHUONG_THUC = { qr: 0, credit: 28000, momo: 14600, atm: 14100 }
+const tinhPhiThanhToan = (pt) => PHI_PHUONG_THUC[pt] ?? 0
+
 // Tạo URL QR VietQR (không lưu vào DB)
 const buildQrUrl = (amount, maDon) =>
   `https://img.vietqr.io/image/BIDV-9630630005144911-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(maDon)}&accountName=KLN%20TRAIN`
@@ -32,15 +36,17 @@ const createPayment = async (idDonDatVe, phuongThuc = 'the_ngan_hang') => {
   if (Date.now() > new Date(don.thoi_gian_het_han).getTime())
     throw { status: 400, message: 'Đơn đặt vé đã hết thời gian thanh toán' }
 
-  const maGD  = genTransactionCode()
-  const pt    = mapPhuongThuc(phuongThuc)
-  const qrUrl = buildQrUrl(don.tien_thanh_toan, don.ma_don)
+  const maGD   = genTransactionCode()
+  const pt     = mapPhuongThuc(phuongThuc)
+  const phi    = tinhPhiThanhToan(phuongThuc)
+  const soTien = parseFloat(don.tien_thanh_toan) + phi
+  const qrUrl  = buildQrUrl(soTien, don.ma_don)
 
   const tt = await ThanhToan.create({
     ma_giao_dich:      maGD,
     id_don_dat_ve:     idDonDatVe,
     phuong_thuc:       pt,
-    so_tien:           don.tien_thanh_toan,
+    so_tien:           soTien,
     trang_thai:        'dang_xu_ly',
     payment_gateway:   mapGateway(phuongThuc),
     so_lan_thu:        1,
@@ -52,7 +58,8 @@ const createPayment = async (idDonDatVe, phuongThuc = 'the_ngan_hang') => {
     idThanhToan: tt.id_thanh_toan,
     maGiaoDich:  maGD,
     qrUrl,
-    soTien:      don.tien_thanh_toan,
+    soTien,
+    phi,
     maDon:       don.ma_don,
   }
 }
@@ -97,7 +104,7 @@ const confirmPayment = async (idThanhToan) => {
       email_khach:          don.email_dat_cho,
       tong_tien_truoc_giam: don.tong_tien,
       tien_giam:            don.tien_giam,
-      tong_tien_thanh_toan: don.tien_thanh_toan,
+      tong_tien_thanh_toan: tt.so_tien,
       ngay_xuat:            fmtDt(now),
       da_gui_email:         false,
     }, { transaction: t })
@@ -112,7 +119,7 @@ const confirmPayment = async (idThanhToan) => {
       soHoaDon:     hd.so_hoa_don,
       maDatCho:     don.ma_dat_cho,
       idDon:        don.id_don_dat_ve,
-      tongThanhToan: don.tien_thanh_toan,
+      tongThanhToan: parseFloat(tt.so_tien),
       veList: ves.map(v => ({
         idVe:          v.id_ve,
         idChuyen:      v.id_chuyen,
@@ -153,14 +160,13 @@ const processWebhook = async (body) => {
   const don = await DonDatVe.findOne({ where: { ma_don: maDon } })
   if (!don || don.trang_thai !== 'cho_thanh_toan') return null
 
-  const tongThanhToan = parseFloat(don.tien_thanh_toan)
-  if (soTien > 0 && Math.abs(soTien - tongThanhToan) > 2000) return null
-
   const tt = await ThanhToan.findOne({
     where: { id_don_dat_ve: don.id_don_dat_ve, trang_thai: 'dang_xu_ly' },
     order: [['id_thanh_toan', 'DESC']],
   })
   if (!tt) return null
+
+  if (soTien > 0 && Math.abs(soTien - parseFloat(tt.so_tien)) > 2000) return null
 
   return confirmPayment(tt.id_thanh_toan)
 }

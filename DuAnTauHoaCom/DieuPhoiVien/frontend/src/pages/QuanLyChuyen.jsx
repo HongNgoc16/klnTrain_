@@ -27,7 +27,7 @@ const fmtDate = (d) => {
 
 const TRANG_THAI_OPT = [
   { v: '',           l: 'Tất cả trạng thái' },
-  { v: 'dung_gio',   l: 'Dừng giờ'          },
+  { v: 'dung_gio',   l: 'Đúng giờ'          },
   { v: 'sap_den',    l: 'Sắp đến'           },
   { v: 'dieu_chinh', l: 'Điều chỉnh'        },
   { v: 'da_chay',    l: 'Đã chạy'           },
@@ -143,17 +143,17 @@ export default function QuanLyChuyen() {
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">Từ ngày</label>
           <input type="date" value={f.ngay} onChange={e => setFilters(p => ({...p, ngay: e.target.value, page: 1}))}
-            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-[#8C1D19] outline-none" />
+            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-[#8C1D19] focus:ring-0 outline-none" />
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">Đến ngày</label>
           <input type="date" value={f.ngayDen} onChange={e => setFilters(p => ({...p, ngayDen: e.target.value, page: 1}))}
-            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-[#8C1D19] outline-none" />
+            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-[#8C1D19] focus:ring-0 outline-none" />
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">Tàu</label>
           <select value={f.idTau} onChange={e => setFilters(p => ({...p, idTau: e.target.value, page: 1}))}
-            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-[#8C1D19] outline-none min-w-[140px]">
+            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-[#8C1D19] focus:ring-0 outline-none min-w-[140px]">
             <option value="">Tất cả tàu</option>
             {tauList.map(t => <option key={t.id_tau} value={t.id_tau}>{t.so_hieu} — {t.ten_tau}</option>)}
           </select>
@@ -161,7 +161,7 @@ export default function QuanLyChuyen() {
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">Trạng thái</label>
           <select value={f.trangThai} onChange={e => setFilters(p => ({...p, trangThai: e.target.value, page: 1}))}
-            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-[#8C1D19] outline-none min-w-[160px]">
+            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-[#8C1D19] focus:ring-0 outline-none min-w-[160px]">
             {TRANG_THAI_OPT.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
           </select>
         </div>
@@ -267,7 +267,7 @@ export default function QuanLyChuyen() {
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Lịch chạy</label>
                 <select value={sinhForm.idLichChay} onChange={e => setSinhForm(p => ({...p, idLichChay: e.target.value}))}
-                  className="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-[#8C1D19] outline-none">
+                  className="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-[#8C1D19] focus:ring-0 outline-none">
                   <option value="">-- Chọn lịch chạy --</option>
                   {lichList.map(l => (
                     <option key={l.id_lich_chay} value={l.id_lich_chay}>
@@ -280,7 +280,7 @@ export default function QuanLyChuyen() {
                 <div key={k}>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">{l}</label>
                   <input type="date" value={sinhForm[k]} onChange={e => setSinhForm(p => ({...p, [k]: e.target.value}))}
-                    className="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-[#8C1D19] outline-none" />
+                    className="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-[#8C1D19] focus:ring-0 outline-none" />
                 </div>
               ))}
               {sinhMsg.text && (
@@ -319,13 +319,13 @@ export default function QuanLyChuyen() {
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Số phút trễ <span className="text-red-500">*</span></label>
                 <input type="number" min={1} max={600} value={dieuChinhForm.delayPhut}
                   onChange={e => setDieuChinhForm(p => ({...p, delayPhut: e.target.value}))}
-                  className="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-orange-400 outline-none"
+                  className="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-orange-400 focus:ring-0 outline-none"
                   placeholder="Ví dụ: 15" />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Lý do / Ghi chú</label>
                 <textarea value={dieuChinhForm.moTa} onChange={e => setDieuChinhForm(p => ({...p, moTa: e.target.value}))}
-                  rows={3} className="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-orange-400 outline-none resize-none"
+                  rows={3} className="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-orange-400 focus:ring-0 outline-none resize-none"
                   placeholder="Nguyên nhân chậm giờ..." />
               </div>
               {dieuChinhMsg.text && (

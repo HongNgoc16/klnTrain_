@@ -99,7 +99,7 @@ const getCoachesByChuyen = async (idChuyen) => {
   // Thử lấy ToaChuyen runtime trước
   const toaChuyens = await ToaChuyen.findAll({
     where: { id_chuyen: idChuyen },
-    include: [{ model: LoaiToa }],
+    include: [{ model: LoaiToa, include: [{ model: LoaiGhe, where: { trang_thai: 'dang_ban' }, required: false }] }],
     order: [['so_toa_thu_tu', 'ASC']],
   })
   if (toaChuyens.length > 0) return toaChuyens
@@ -107,7 +107,7 @@ const getCoachesByChuyen = async (idChuyen) => {
   // Fallback về template CauHinhToa
   return CauHinhToa.findAll({
     where: { id_tau: idTau },
-    include: [{ model: LoaiToa }],
+    include: [{ model: LoaiToa, include: [{ model: LoaiGhe, where: { trang_thai: 'dang_ban' }, required: false }] }],
     order: [['so_toa_thu_tu', 'ASC']],
   })
 }

@@ -51,7 +51,7 @@ const Sidebar = ({ collapsed, toggleCollapse, mobileOpen }) => {
           <li className="listItem">
             <NavLink to="/admin/tickets" className={({ isActive }) => `menuLink flex ${isActive ? 'active' : ''}`}>
               <FaTicketAlt className='icon' />
-              <span className="smallText">Quản lý vé</span>
+              <span className="smallText">Theo dõi vé</span>
             </NavLink>
           </li>
           <li className="listItem">
@@ -121,7 +121,7 @@ const Sidebar = ({ collapsed, toggleCollapse, mobileOpen }) => {
 
       {/* KHÁCH HÀNG & NGƯỜI DÙNG */}
       <div className="menuDiv">
-        <h3 className="divTitle">KHÁCH HÀNG</h3>
+        <h3 className="divTitle">NGƯỜI DÙNG</h3>
         <ul className="menuLists grid">
           <li className="listItem">
             <NavLink to="/admin/customers" className={({ isActive }) => `menuLink flex ${isActive ? 'active' : ''}`}>
