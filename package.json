@@ -12,6 +12,12 @@
     "install:all": "npm --prefix DuAnTauHoaCom/backend install && npm --prefix DuAnTauHoaCom/frontend install && npm --prefix DuAnTauHoaCom/DieuPhoiVien/frontend install && npm --prefix train install"
   },
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "concurrently": "^9.2.1",
+    "sass-embedded": "^1.100.0"
+  },
+  "dependencies": {
+    "file-saver": "^2.0.5",
+    "recharts": "^3.8.1",
+    "xlsx": "^0.18.5"
   }
 }
