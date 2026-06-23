@@ -2,7 +2,7 @@ package com.klntrain.service;
 
 import com.klntrain.entity.*;
 import com.klntrain.repository.*;
-import com.klntrain.util.AppException;
+import com.klntrain.util.NgoaiLeUngDung;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -64,10 +64,10 @@ public class DieuPhoiService {
     public Map<String, Object> logSuKien(Long idChuyen, String loaiSuKien, String moTa,
                                           Integer delayPhut, Long idGaAnhHuong, Integer soToa, Long nguoiTao) {
         ChuyenTau ct = chuyenTauRepo.findById(idChuyen)
-            .orElseThrow(() -> AppException.notFound("Không tìm thấy chuyến tàu"));
+            .orElseThrow(() -> NgoaiLeUngDung.khongTimThay("Không tìm thấy chuyến tàu"));
 
         if ("da_chay".equals(ct.getTrangThai())) {
-            throw AppException.badRequest("Chuyến tàu đã chạy, không thể ghi nhận sự kiện");
+            throw NgoaiLeUngDung.loiYeuCau("Chuyến tàu đã chạy, không thể ghi nhận sự kiện");
         }
 
         DieuPhoi dp = DieuPhoi.builder()
@@ -100,10 +100,10 @@ public class DieuPhoiService {
     @Transactional
     public void updateTrangThai(Long idChuyen, String trangThai, String ghiChu, Long nguoiTao) {
         List<String> valid = List.of("dung_gio", "da_chay", "huy", "dieu_chinh", "sap_den");
-        if (!valid.contains(trangThai)) throw AppException.badRequest("Trạng thái không hợp lệ");
+        if (!valid.contains(trangThai)) throw NgoaiLeUngDung.loiYeuCau("Trạng thái không hợp lệ");
 
         ChuyenTau ct = chuyenTauRepo.findById(idChuyen)
-            .orElseThrow(() -> AppException.notFound("Không tìm thấy chuyến tàu"));
+            .orElseThrow(() -> NgoaiLeUngDung.khongTimThay("Không tìm thấy chuyến tàu"));
         ct.setTrangThai(trangThai);
         if (ghiChu != null) ct.setGhiChu(ghiChu);
         chuyenTauRepo.save(ct);
@@ -121,7 +121,7 @@ public class DieuPhoiService {
 
     public Map<String, Object> getChuyenDetail(Long idChuyen) {
         ChuyenTau ct = chuyenTauRepo.findById(idChuyen)
-            .orElseThrow(() -> AppException.notFound("Không tìm thấy chuyến tàu"));
+            .orElseThrow(() -> NgoaiLeUngDung.khongTimThay("Không tìm thấy chuyến tàu"));
 
         List<ToaChuyen> toaList = toaChuyenRepo.findByIdChuyenWithLoaiToa(idChuyen);
         List<DieuPhoi> events = dieuPhoiRepo.findByIdChuyenOrderByThoiGianTaoDesc(idChuyen);
@@ -169,14 +169,14 @@ public class DieuPhoiService {
     @Transactional
     public Map<String, Object> sinhChuyenTau(Long idLichChay, String tuNgay, String denNgay) {
         LichChay lc = lichChayRepo.findById(idLichChay)
-            .orElseThrow(() -> AppException.badRequest("Lịch chạy không tồn tại"));
+            .orElseThrow(() -> NgoaiLeUngDung.loiYeuCau("Lịch chạy không tồn tại"));
 
         LocalDate start = LocalDate.parse(tuNgay);
         LocalDate end   = LocalDate.parse(denNgay);
 
-        if (start.isAfter(end)) throw AppException.badRequest("Khoảng ngày không hợp lệ");
+        if (start.isAfter(end)) throw NgoaiLeUngDung.loiYeuCau("Khoảng ngày không hợp lệ");
         if (java.time.temporal.ChronoUnit.DAYS.between(start, end) > 90)
-            throw AppException.badRequest("Tối đa 90 ngày mỗi lần sinh chuyến");
+            throw NgoaiLeUngDung.loiYeuCau("Tối đa 90 ngày mỗi lần sinh chuyến");
 
         Set<LocalDate> existing = new HashSet<>();
         chuyenTauRepo.findByLichChayAndDateRange(idLichChay, start, end)
@@ -235,7 +235,7 @@ public class DieuPhoiService {
 
     @Transactional
     public void updateLichChay(Long id, Map<String, Object> body) {
-        LichChay lc = lichChayRepo.findById(id).orElseThrow(() -> AppException.notFound("Không tìm thấy lịch chạy"));
+        LichChay lc = lichChayRepo.findById(id).orElseThrow(() -> NgoaiLeUngDung.khongTimThay("Không tìm thấy lịch chạy"));
         if (body.get("gioKhoiHanh") != null) lc.setGioKhoiHanh(java.time.LocalTime.parse(body.get("gioKhoiHanh").toString()));
         if (body.get("gioDuKienDen") != null) lc.setGioDuKienDen(java.time.LocalTime.parse(body.get("gioDuKienDen").toString()));
         lichChayRepo.save(lc);
@@ -243,8 +243,8 @@ public class DieuPhoiService {
 
     @Transactional
     public void deleteLichChay(Long id) {
-        LichChay lc = lichChayRepo.findById(id).orElseThrow(() -> AppException.notFound("Không tìm thấy lịch chạy"));
-        if (chuyenTauRepo.countByIdLichChay(id) > 0) throw AppException.badRequest("Không thể xóa lịch trình đã có chuyến tàu");
+        LichChay lc = lichChayRepo.findById(id).orElseThrow(() -> NgoaiLeUngDung.khongTimThay("Không tìm thấy lịch chạy"));
+        if (chuyenTauRepo.countByIdLichChay(id) > 0) throw NgoaiLeUngDung.loiYeuCau("Không thể xóa lịch trình đã có chuyến tàu");
         lichTrinhChuyenRepo.deleteByIdLichChay(id);
         lichChayRepo.delete(lc);
     }
@@ -255,7 +255,7 @@ public class DieuPhoiService {
 
     @Transactional
     public Map<String, Object> addGaDung(Long idLichChay, Map<String, Object> body) {
-        LichChay lc = lichChayRepo.findById(idLichChay).orElseThrow(() -> AppException.notFound("Không tìm thấy lịch chạy"));
+        LichChay lc = lichChayRepo.findById(idLichChay).orElseThrow(() -> NgoaiLeUngDung.khongTimThay("Không tìm thấy lịch chạy"));
         LichTrinhChuyen ltc = new LichTrinhChuyen();
         ltc.setIdLichChay(idLichChay);
         ltc.setIdGa(Long.parseLong(body.get("idGa").toString()));
@@ -270,7 +270,7 @@ public class DieuPhoiService {
 
     @Transactional
     public void updateGaDung(Long id, Map<String, Object> body) {
-        LichTrinhChuyen ltc = lichTrinhChuyenRepo.findById(id).orElseThrow(() -> AppException.notFound("Không tìm thấy ga dừng"));
+        LichTrinhChuyen ltc = lichTrinhChuyenRepo.findById(id).orElseThrow(() -> NgoaiLeUngDung.khongTimThay("Không tìm thấy ga dừng"));
         if (body.get("gioDen") != null) ltc.setGioDen(java.time.LocalTime.parse(body.get("gioDen").toString()));
         if (body.get("gioDi") != null)  ltc.setGioDi(java.time.LocalTime.parse(body.get("gioDi").toString()));
         if (body.get("khoangCachKm") != null) ltc.setKhoangCachKm(new java.math.BigDecimal(body.get("khoangCachKm").toString()));
@@ -279,7 +279,7 @@ public class DieuPhoiService {
 
     @Transactional
     public void removeGaDung(Long id) {
-        LichTrinhChuyen ltc = lichTrinhChuyenRepo.findById(id).orElseThrow(() -> AppException.notFound("Không tìm thấy ga dừng"));
+        LichTrinhChuyen ltc = lichTrinhChuyenRepo.findById(id).orElseThrow(() -> NgoaiLeUngDung.khongTimThay("Không tìm thấy ga dừng"));
         lichTrinhChuyenRepo.delete(ltc);
     }
 
@@ -287,7 +287,7 @@ public class DieuPhoiService {
     public Map<String, Object> addToaChuyen(Long idChuyen, Map<String, Object> body) {
         int soToaThuTu = Integer.parseInt(body.get("soToaThuTu").toString());
         if (toaChuyenRepo.existsByIdChuyenAndSoToaThuTu(idChuyen, soToaThuTu))
-            throw AppException.badRequest("Toa số " + soToaThuTu + " đã tồn tại");
+            throw NgoaiLeUngDung.loiYeuCau("Toa số " + soToaThuTu + " đã tồn tại");
         ToaChuyen tc = ToaChuyen.builder()
             .idChuyen(idChuyen)
             .soToaThuTu(soToaThuTu)
@@ -301,7 +301,7 @@ public class DieuPhoiService {
 
     @Transactional
     public Map<String, Object> updateToaChuyen(Long toaId, Map<String, Object> body) {
-        ToaChuyen tc = toaChuyenRepo.findById(toaId).orElseThrow(() -> AppException.notFound("Không tìm thấy toa"));
+        ToaChuyen tc = toaChuyenRepo.findById(toaId).orElseThrow(() -> NgoaiLeUngDung.khongTimThay("Không tìm thấy toa"));
         if (body.get("soGheToiDa") != null) tc.setSoGheToiDa(Integer.parseInt(body.get("soGheToiDa").toString()));
         if (body.get("trangThai") != null) tc.setTrangThai((String) body.get("trangThai"));
         toaChuyenRepo.save(tc);
@@ -310,9 +310,9 @@ public class DieuPhoiService {
 
     @Transactional
     public void removeToaChuyen(Long toaId) {
-        ToaChuyen tc = toaChuyenRepo.findById(toaId).orElseThrow(() -> AppException.notFound("Không tìm thấy toa"));
+        ToaChuyen tc = toaChuyenRepo.findById(toaId).orElseThrow(() -> NgoaiLeUngDung.khongTimThay("Không tìm thấy toa"));
         long cnt = veRepo.countActiveByChuyenAndToa(tc.getIdChuyen(), tc.getSoToaThuTu());
-        if (cnt > 0) throw AppException.badRequest("Không thể xóa toa đã có " + cnt + " vé đặt");
+        if (cnt > 0) throw NgoaiLeUngDung.loiYeuCau("Không thể xóa toa đã có " + cnt + " vé đặt");
         toaChuyenRepo.delete(tc);
     }
 
